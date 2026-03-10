@@ -1,38 +1,119 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import {
+  products, quotes, quoteItems,
+  type Product, type InsertProduct, type UpdateProductRequest,
+  type Quote, type InsertQuote, type UpdateQuoteRequest,
+  type QuoteItem, type InsertQuoteItem
+} from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Products
+  getProducts(): Promise<Product[]>;
+  getProduct(id: number): Promise<Product | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: number, updates: UpdateProductRequest): Promise<Product | undefined>;
+  deleteProduct(id: number): Promise<void>;
+
+  // Quotes
+  getQuotes(): Promise<Quote[]>;
+  getQuote(id: number): Promise<Quote | undefined>;
+  createQuote(quote: InsertQuote): Promise<Quote>;
+  updateQuote(id: number, updates: UpdateQuoteRequest): Promise<Quote | undefined>;
+  deleteQuote(id: number): Promise<void>;
+  
+  // Quote Items
+  getQuoteItems(quoteId: number): Promise<QuoteItem[]>;
+  createQuoteItem(item: InsertQuoteItem): Promise<QuoteItem>;
+  deleteQuoteItem(id: number): Promise<void>;
+  updateQuoteTotal(quoteId: number): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  // Products
+  async getProducts(): Promise<Product[]> {
+    return await db.select().from(products);
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [newProduct] = await db.insert(products).values(product).returning();
+    return newProduct;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async updateProduct(id: number, updates: UpdateProductRequest): Promise<Product | undefined> {
+    const [updated] = await db.update(products)
+      .set(updates)
+      .where(eq(products.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteProduct(id: number): Promise<void> {
+    await db.delete(products).where(eq(products.id, id));
+  }
+
+  // Quotes
+  async getQuotes(): Promise<Quote[]> {
+    return await db.select().from(quotes).orderBy(quotes.createdAt);
+  }
+
+  async getQuote(id: number): Promise<Quote | undefined> {
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, id));
+    return quote;
+  }
+
+  async createQuote(quote: InsertQuote): Promise<Quote> {
+    const [newQuote] = await db.insert(quotes).values(quote).returning();
+    return newQuote;
+  }
+
+  async updateQuote(id: number, updates: UpdateQuoteRequest): Promise<Quote | undefined> {
+    const [updated] = await db.update(quotes)
+      .set(updates)
+      .where(eq(quotes.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteQuote(id: number): Promise<void> {
+    await db.delete(quoteItems).where(eq(quoteItems.quoteId, id));
+    await db.delete(quotes).where(eq(quotes.id, id));
+  }
+
+  // Quote Items
+  async getQuoteItems(quoteId: number): Promise<QuoteItem[]> {
+    return await db.select().from(quoteItems).where(eq(quoteItems.quoteId, quoteId));
+  }
+
+  async createQuoteItem(item: InsertQuoteItem): Promise<QuoteItem> {
+    const [newItem] = await db.insert(quoteItems).values(item).returning();
+    await this.updateQuoteTotal(item.quoteId);
+    return newItem;
+  }
+
+  async deleteQuoteItem(id: number): Promise<void> {
+    const [item] = await db.select().from(quoteItems).where(eq(quoteItems.id, id));
+    if (item) {
+      await db.delete(quoteItems).where(eq(quoteItems.id, id));
+      await this.updateQuoteTotal(item.quoteId);
+    }
+  }
+
+  async updateQuoteTotal(quoteId: number): Promise<void> {
+    const items = await this.getQuoteItems(quoteId);
+    const total = items.reduce((sum, item) => {
+      return sum + (Number(item.quantity) * Number(item.unitPrice));
+    }, 0);
+    
+    await db.update(quotes)
+      .set({ totalAmount: total.toString() })
+      .where(eq(quotes.id, quoteId));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
