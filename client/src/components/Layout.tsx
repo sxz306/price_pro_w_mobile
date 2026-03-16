@@ -23,14 +23,14 @@ function NavItem({ href, icon: Icon, label, active }: NavItemProps) {
   return (
     <Link 
       href={href} 
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-150 ${
         active 
-          ? "bg-primary text-primary-foreground font-medium shadow-md shadow-primary/20" 
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          ? "bg-primary text-primary-foreground font-semibold shadow-sm shadow-primary/25" 
+          : "text-sidebar-foreground font-medium hover:bg-sidebar-accent hover:text-sidebar-foreground"
       }`}
     >
-      <Icon className={`w-5 h-5 ${active ? "text-primary-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground"}`} />
-      <span>{label}</span>
+      <Icon className={`w-4.5 h-4.5 shrink-0 ${active ? "text-primary-foreground" : "text-sidebar-foreground/60"}`} />
+      <span className="text-sm">{label}</span>
     </Link>
   );
 }
@@ -45,15 +45,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground border-r border-sidebar-border w-64 p-4">
-      <div className="flex items-center gap-3 px-2 py-4 mb-6">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-          <FileText className="w-5 h-5 text-primary-foreground" />
+    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground border-r border-sidebar-border w-64 p-4 shadow-sm">
+      <div className="flex items-center gap-3 px-2 py-4 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/25">
+          <FileText className="w-4 h-4 text-primary-foreground" />
         </div>
-        <h1 className="text-xl font-display font-bold tracking-tight">PriceFlow</h1>
+        <h1 className="text-lg font-display font-bold tracking-tight text-sidebar-foreground">PriceFlow</h1>
       </div>
+
+      <p className="px-4 mb-2 text-[11px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">Navigation</p>
       
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-1">
         {navItems.map((item) => (
           <NavItem 
             key={item.href} 
@@ -63,14 +65,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         ))}
       </nav>
 
-      <div className="mt-auto pt-6 border-t border-sidebar-border/50">
+      <div className="mt-auto pt-4 border-t border-sidebar-border space-y-1">
         <NavItem href="/settings" icon={Settings} label="Settings" />
-        <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-sidebar-accent/50">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sidebar-accent/60 mt-2">
+          <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center flex-shrink-0">
             <span className="text-xs font-bold text-primary">SR</span>
           </div>
           <div className="overflow-hidden">
-            <p className="text-sm font-medium truncate">Sales Rep</p>
+            <p className="text-sm font-semibold text-sidebar-foreground truncate">Sales Rep</p>
             <p className="text-xs text-sidebar-foreground/50 truncate">rep@priceflow.com</p>
           </div>
         </div>
