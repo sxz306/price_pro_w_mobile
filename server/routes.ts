@@ -162,32 +162,32 @@ async function seedDatabase() {
     const p1 = await storage.createProduct({
       name: "Stocked Powder A",
       description: null,
-      basePrice: "12000.00",
-      cost: "12000.00",
+      basePrice: "12.00",
+      cost: "12.00",
       category: "Stocked Powder"
     });
 
     const p2 = await storage.createProduct({
       name: "Stocked Powder B",
       description: null,
-      basePrice: "8000.00",
-      cost: "8000.00",
+      basePrice: "8.00",
+      cost: "8.00",
       category: "Stocked Powder"
     });
 
     const p3 = await storage.createProduct({
       name: "Non Stocked Powder C",
       description: null,
-      basePrice: "6000.00",
-      cost: "6000.00",
+      basePrice: "6.00",
+      cost: "6.00",
       category: "Non Stocked"
     });
 
     const p4 = await storage.createProduct({
       name: "Non Stocked Powder D",
       description: null,
-      basePrice: "10000.00",
-      cost: "10000.00",
+      basePrice: "10.00",
+      cost: "10.00",
       category: "Non Stocked"
     });
 
@@ -208,28 +208,28 @@ async function seedDatabase() {
       quoteId: q1.id,
       productId: p1.id,
       quantity: 2,
-      unitPrice: "12000.00"
+      unitPrice: "12.00"
     });
 
     await storage.createQuoteItem({
       quoteId: q1.id,
       productId: p3.id,
       quantity: 1,
-      unitPrice: "6000.00"
+      unitPrice: "6.00"
     });
 
     await storage.createQuoteItem({
       quoteId: q2.id,
       productId: p2.id,
       quantity: 3,
-      unitPrice: "8000.00"
+      unitPrice: "8.00"
     });
 
     await storage.createQuoteItem({
       quoteId: q2.id,
       productId: p4.id,
       quantity: 1,
-      unitPrice: "10000.00"
+      unitPrice: "10.00"
     });
   }
 }

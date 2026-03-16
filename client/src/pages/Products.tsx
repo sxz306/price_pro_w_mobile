@@ -128,7 +128,7 @@ export default function Products() {
                   <TableHead className="font-semibold text-foreground">Name</TableHead>
                   <TableHead className="font-semibold text-foreground hidden md:table-cell">Category</TableHead>
                   <TableHead className="font-semibold text-foreground hidden lg:table-cell">Description</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right">Cost</TableHead>
+                  <TableHead className="font-semibold text-foreground text-right">Unit Cost</TableHead>
                   <TableHead className="font-semibold text-foreground text-right">Base Price</TableHead>
                   <TableHead className="font-semibold text-foreground text-right hidden sm:table-cell">Margin</TableHead>
                   <TableHead className="font-semibold text-foreground w-[120px] text-center">Actions</TableHead>
@@ -247,7 +247,7 @@ export default function Products() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Cost ($) <span className="text-muted-foreground font-normal text-xs">— optional, used for margin analysis</span>
+                      Unit Cost ($) <span className="text-muted-foreground font-normal text-xs">— optional, used for margin analysis</span>
                     </FormLabel>
                     <FormControl>
                       <Input
