@@ -9,6 +9,7 @@ import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
 import Quotes from "@/pages/Quotes";
 import QuoteDetails from "@/pages/QuoteDetails";
+import Customers from "@/pages/Customers";
 
 function Router() {
   return (
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/products" component={Products}/>
       <Route path="/quotes" component={Quotes}/>
       <Route path="/quotes/:id" component={QuoteDetails}/>
+      <Route path="/customers" component={Customers}/>
       <Route component={NotFound} />
     </Switch>
   );

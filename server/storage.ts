@@ -1,6 +1,7 @@
 import { db } from "./db";
 import {
-  products, quotes, quoteItems,
+  customers, products, quotes, quoteItems,
+  type Customer, type InsertCustomer, type UpdateCustomerRequest,
   type Product, type InsertProduct, type UpdateProductRequest,
   type Quote, type InsertQuote, type UpdateQuoteRequest,
   type QuoteItem, type InsertQuoteItem
@@ -8,6 +9,13 @@ import {
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
+  // Customers
+  getCustomers(): Promise<Customer[]>;
+  getCustomer(id: number): Promise<Customer | undefined>;
+  createCustomer(customer: InsertCustomer): Promise<Customer>;
+  updateCustomer(id: number, updates: UpdateCustomerRequest): Promise<Customer | undefined>;
+  deleteCustomer(id: number): Promise<void>;
+
   // Products
   getProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
@@ -21,7 +29,7 @@ export interface IStorage {
   createQuote(quote: InsertQuote): Promise<Quote>;
   updateQuote(id: number, updates: UpdateQuoteRequest): Promise<Quote | undefined>;
   deleteQuote(id: number): Promise<void>;
-  
+
   // Quote Items
   getQuoteItems(quoteId: number): Promise<QuoteItem[]>;
   createQuoteItem(item: InsertQuoteItem): Promise<QuoteItem>;
@@ -30,6 +38,33 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Customers
+  async getCustomers(): Promise<Customer[]> {
+    return await db.select().from(customers).orderBy(customers.name);
+  }
+
+  async getCustomer(id: number): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+    return customer;
+  }
+
+  async createCustomer(customer: InsertCustomer): Promise<Customer> {
+    const [newCustomer] = await db.insert(customers).values(customer).returning();
+    return newCustomer;
+  }
+
+  async updateCustomer(id: number, updates: UpdateCustomerRequest): Promise<Customer | undefined> {
+    const [updated] = await db.update(customers)
+      .set(updates)
+      .where(eq(customers.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteCustomer(id: number): Promise<void> {
+    await db.delete(customers).where(eq(customers.id, id));
+  }
+
   // Products
   async getProducts(): Promise<Product[]> {
     return await db.select().from(products);
@@ -109,7 +144,7 @@ export class DatabaseStorage implements IStorage {
     const total = items.reduce((sum, item) => {
       return sum + (Number(item.quantity) * Number(item.unitPrice));
     }, 0);
-    
+
     await db.update(quotes)
       .set({ totalAmount: total.toString() })
       .where(eq(quotes.id, quoteId));

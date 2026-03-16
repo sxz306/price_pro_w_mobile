@@ -4,6 +4,7 @@ import {
   LayoutDashboard, 
   Package, 
   FileText, 
+  Users,
   Menu,
   Settings,
   Bell,
@@ -42,6 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/quotes", icon: FileText, label: "Quotes" },
     { href: "/products", icon: Package, label: "Products" },
+    { href: "/customers", icon: Users, label: "Customers" },
   ];
 
   const SidebarContent = () => (

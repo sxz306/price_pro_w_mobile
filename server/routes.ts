@@ -8,6 +8,50 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // === CUSTOMERS ===
+  app.get(api.customers.list.path, async (req, res) => {
+    const customerList = await storage.getCustomers();
+    res.json(customerList);
+  });
+
+  app.get(api.customers.get.path, async (req, res) => {
+    const customer = await storage.getCustomer(Number(req.params.id));
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    res.json(customer);
+  });
+
+  app.post(api.customers.create.path, async (req, res) => {
+    try {
+      const input = api.customers.create.input.parse(req.body);
+      const customer = await storage.createCustomer(input);
+      res.status(201).json(customer);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
+      }
+      throw err;
+    }
+  });
+
+  app.patch(api.customers.update.path, async (req, res) => {
+    try {
+      const input = api.customers.update.input.parse(req.body);
+      const customer = await storage.updateCustomer(Number(req.params.id), input);
+      if (!customer) return res.status(404).json({ message: 'Customer not found' });
+      res.json(customer);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
+      }
+      throw err;
+    }
+  });
+
+  app.delete(api.customers.delete.path, async (req, res) => {
+    await storage.deleteCustomer(Number(req.params.id));
+    res.status(204).send();
+  });
+
   // === PRODUCTS ===
   app.get(api.products.list.path, async (req, res) => {
     const products = await storage.getProducts();
@@ -21,10 +65,7 @@ export async function registerRoutes(
       res.status(201).json(product);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
-        });
+        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
       }
       throw err;
     }
@@ -32,9 +73,7 @@ export async function registerRoutes(
 
   app.get(api.products.get.path, async (req, res) => {
     const product = await storage.getProduct(Number(req.params.id));
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
+    if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json(product);
   });
 
@@ -42,16 +81,11 @@ export async function registerRoutes(
     try {
       const input = api.products.update.input.parse(req.body);
       const product = await storage.updateProduct(Number(req.params.id), input);
-      if (!product) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
+      if (!product) return res.status(404).json({ message: 'Product not found' });
       res.json(product);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
-        });
+        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
       }
       throw err;
     }
@@ -70,9 +104,7 @@ export async function registerRoutes(
 
   app.get(api.quotes.get.path, async (req, res) => {
     const quote = await storage.getQuote(Number(req.params.id));
-    if (!quote) {
-      return res.status(404).json({ message: 'Quote not found' });
-    }
+    if (!quote) return res.status(404).json({ message: 'Quote not found' });
     res.json(quote);
   });
 
@@ -83,10 +115,7 @@ export async function registerRoutes(
       res.status(201).json(quote);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
-        });
+        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
       }
       throw err;
     }
@@ -96,16 +125,11 @@ export async function registerRoutes(
     try {
       const input = api.quotes.update.input.parse(req.body);
       const quote = await storage.updateQuote(Number(req.params.id), input);
-      if (!quote) {
-        return res.status(404).json({ message: 'Quote not found' });
-      }
+      if (!quote) return res.status(404).json({ message: 'Quote not found' });
       res.json(quote);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
-        });
+        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
       }
       throw err;
     }
@@ -125,20 +149,14 @@ export async function registerRoutes(
   app.post(api.quoteItems.create.path, async (req, res) => {
     try {
       const input = api.quoteItems.create.input.parse(req.body);
-      // Construct item with URL param quoteId
-      const itemToCreate = {
+      const item = await storage.createQuoteItem({
         ...input,
         quoteId: Number(req.params.quoteId),
-      };
-      
-      const item = await storage.createQuoteItem(itemToCreate);
+      });
       res.status(201).json(item);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return res.status(400).json({
-          message: err.errors[0].message,
-          field: err.errors[0].path.join('.'),
-        });
+        return res.status(400).json({ message: err.errors[0].message, field: err.errors[0].path.join('.') });
       }
       throw err;
     }
@@ -159,77 +177,18 @@ async function seedDatabase() {
   const existingProducts = await storage.getProducts();
   if (existingProducts.length === 0) {
     console.log("Seeding products...");
-    const p1 = await storage.createProduct({
-      name: "Stocked Powder A",
-      description: null,
-      basePrice: "12.00",
-      cost: "12.00",
-      category: "Stocked Powder"
-    });
-
-    const p2 = await storage.createProduct({
-      name: "Stocked Powder B",
-      description: null,
-      basePrice: "8.00",
-      cost: "8.00",
-      category: "Stocked Powder"
-    });
-
-    const p3 = await storage.createProduct({
-      name: "Non Stocked Powder C",
-      description: null,
-      basePrice: "6.00",
-      cost: "6.00",
-      category: "Non Stocked"
-    });
-
-    const p4 = await storage.createProduct({
-      name: "Non Stocked Powder D",
-      description: null,
-      basePrice: "10.00",
-      cost: "10.00",
-      category: "Non Stocked"
-    });
+    const p1 = await storage.createProduct({ name: "Stocked Powder A", description: null, basePrice: "12.00", cost: "12.00", category: "Stocked Powder" });
+    const p2 = await storage.createProduct({ name: "Stocked Powder B", description: null, basePrice: "8.00", cost: "8.00", category: "Stocked Powder" });
+    const p3 = await storage.createProduct({ name: "Non Stocked Powder C", description: null, basePrice: "6.00", cost: "6.00", category: "Non Stocked" });
+    const p4 = await storage.createProduct({ name: "Non Stocked Powder D", description: null, basePrice: "10.00", cost: "10.00", category: "Non Stocked" });
 
     console.log("Seeding quotes...");
-    const q1 = await storage.createQuote({
-      customerName: "Acme Corp",
-      customerEmail: "procurement@acmecorp.example.com",
-      status: "draft"
-    });
-    
-    const q2 = await storage.createQuote({
-      customerName: "Globex Industries",
-      customerEmail: "billing@globex.example.com",
-      status: "sent"
-    });
-    
-    await storage.createQuoteItem({
-      quoteId: q1.id,
-      productId: p1.id,
-      quantity: 2,
-      unitPrice: "12.00"
-    });
+    const q1 = await storage.createQuote({ customerName: "Acme Corp", customerEmail: "procurement@acmecorp.example.com", status: "draft" });
+    const q2 = await storage.createQuote({ customerName: "Globex Industries", customerEmail: "billing@globex.example.com", status: "sent" });
 
-    await storage.createQuoteItem({
-      quoteId: q1.id,
-      productId: p3.id,
-      quantity: 1,
-      unitPrice: "6.00"
-    });
-
-    await storage.createQuoteItem({
-      quoteId: q2.id,
-      productId: p2.id,
-      quantity: 3,
-      unitPrice: "8.00"
-    });
-
-    await storage.createQuoteItem({
-      quoteId: q2.id,
-      productId: p4.id,
-      quantity: 1,
-      unitPrice: "10.00"
-    });
+    await storage.createQuoteItem({ quoteId: q1.id, productId: p1.id, quantity: 2, unitPrice: "12.00" });
+    await storage.createQuoteItem({ quoteId: q1.id, productId: p3.id, quantity: 1, unitPrice: "6.00" });
+    await storage.createQuoteItem({ quoteId: q2.id, productId: p2.id, quantity: 3, unitPrice: "8.00" });
+    await storage.createQuoteItem({ quoteId: q2.id, productId: p4.id, quantity: 1, unitPrice: "10.00" });
   }
 }
