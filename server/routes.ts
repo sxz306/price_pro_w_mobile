@@ -163,6 +163,7 @@ async function seedDatabase() {
       name: "Enterprise Software License",
       description: "Annual license for up to 100 users",
       basePrice: "12000.00",
+      cost: "6500.00",
       category: "Software"
     });
     
@@ -170,6 +171,7 @@ async function seedDatabase() {
       name: "Implementation Consulting",
       description: "Dedicated project manager and deployment services",
       basePrice: "5000.00",
+      cost: "2800.00",
       category: "Services"
     });
     
@@ -177,6 +179,7 @@ async function seedDatabase() {
       name: "Premium Support SLA",
       description: "24/7 phone support and 1hr response time",
       basePrice: "2500.00",
+      cost: "900.00",
       category: "Support"
     });
 

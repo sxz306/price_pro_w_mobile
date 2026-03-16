@@ -4,7 +4,7 @@ import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } fro
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Edit2, Trash2, PackageSearch } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,7 @@ import type { Product } from "@shared/schema";
 
 const productFormSchema = insertProductSchema.extend({
   basePrice: z.coerce.number().min(0, "Price must be positive"),
+  cost: z.coerce.number().min(0, "Cost must be positive").optional(),
 });
 
 export default function Products() {
@@ -33,13 +34,14 @@ export default function Products() {
       name: "",
       description: "",
       basePrice: 0,
+      cost: undefined,
       category: "",
     },
   });
 
   const handleOpenCreate = () => {
     setEditingProduct(null);
-    form.reset({ name: "", description: "", basePrice: 0, category: "" });
+    form.reset({ name: "", description: "", basePrice: 0, cost: undefined, category: "" });
     setIsFormOpen(true);
   };
 
@@ -49,6 +51,7 @@ export default function Products() {
       name: product.name,
       description: product.description || "",
       basePrice: parseFloat(product.basePrice),
+      cost: product.cost ? parseFloat(product.cost) : undefined,
       category: product.category,
     });
     setIsFormOpen(true);
@@ -58,6 +61,7 @@ export default function Products() {
     const payload = {
       ...values,
       basePrice: values.basePrice.toString(),
+      cost: values.cost != null ? values.cost.toString() : null,
     };
 
     if (editingProduct) {
@@ -66,14 +70,26 @@ export default function Products() {
         { onSuccess: () => setIsFormOpen(false) }
       );
     } else {
-      createProduct.mutate(payload, { onSuccess: () => setIsFormOpen(false) });
+      createProduct.mutate(payload as any, { onSuccess: () => setIsFormOpen(false) });
     }
   };
 
-  const formatCurrency = (val: string) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(parseFloat(val));
+  const formatCurrency = (val: string | null | undefined) => {
+    if (!val) return "—";
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(parseFloat(val));
+  };
 
-  const filteredProducts = products?.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
+  const formatMargin = (basePrice: string, cost: string | null | undefined) => {
+    if (!cost) return null;
+    const bp = parseFloat(basePrice);
+    const c = parseFloat(cost);
+    if (bp === 0) return null;
+    const margin = ((bp - c) / bp) * 100;
+    return margin;
+  };
+
+  const filteredProducts = products?.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.category.toLowerCase().includes(search.toLowerCase())
   ) || [];
 
@@ -83,7 +99,7 @@ export default function Products() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-display font-bold text-foreground">Products</h1>
-            <p className="text-muted-foreground mt-1">Manage your catalog and base pricing.</p>
+            <p className="text-muted-foreground mt-1">Manage your catalog, pricing, and costs.</p>
           </div>
           <Button onClick={handleOpenCreate} className="rounded-xl shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 font-medium px-6">
             <Plus className="w-5 h-5 mr-2" />
@@ -95,10 +111,11 @@ export default function Products() {
           <div className="p-4 border-b border-border/50 bg-muted/20">
             <div className="relative max-w-md">
               <PackageSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search products by name or category..." 
+              <Input
+                placeholder="Search products by name or category..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                data-testid="input-search-products"
                 className="pl-9 rounded-xl bg-background border-border shadow-sm"
               />
             </div>
@@ -111,49 +128,64 @@ export default function Products() {
                   <TableHead className="font-semibold text-foreground">Name</TableHead>
                   <TableHead className="font-semibold text-foreground hidden md:table-cell">Category</TableHead>
                   <TableHead className="font-semibold text-foreground hidden lg:table-cell">Description</TableHead>
+                  <TableHead className="font-semibold text-foreground text-right">Cost</TableHead>
                   <TableHead className="font-semibold text-foreground text-right">Base Price</TableHead>
+                  <TableHead className="font-semibold text-foreground text-right hidden sm:table-cell">Margin</TableHead>
                   <TableHead className="font-semibold text-foreground w-[120px] text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                       <div className="flex justify-center"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div></div>
                     </TableCell>
                   </TableRow>
                 ) : filteredProducts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-48 text-center text-muted-foreground flex-col items-center justify-center">
+                    <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
                       <PackageSearch className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
                       <p>No products found.</p>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredProducts.map((product) => (
-                    <TableRow key={product.id} className="group hover:bg-muted/20 transition-colors">
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground border border-border/50">
-                          {product.category}
-                        </span>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground truncate max-w-xs">{product.description}</TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(product.basePrice)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => handleOpenEdit(product)}>
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => {
-                            if(confirm("Are you sure you want to delete this product?")) deleteProduct.mutate(product.id);
-                          }}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  filteredProducts.map((product) => {
+                    const margin = formatMargin(product.basePrice, product.cost);
+                    return (
+                      <TableRow key={product.id} data-testid={`row-product-${product.id}`} className="group hover:bg-muted/20 transition-colors">
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground border border-border/50">
+                            {product.category}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground truncate max-w-xs">{product.description}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{formatCurrency(product.cost)}</TableCell>
+                        <TableCell className="text-right font-medium">{formatCurrency(product.basePrice)}</TableCell>
+                        <TableCell className="text-right hidden sm:table-cell">
+                          {margin != null ? (
+                            <span className={`text-sm font-medium ${margin >= 50 ? 'text-emerald-600 dark:text-emerald-400' : margin >= 25 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                              {margin.toFixed(1)}%
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" data-testid={`button-edit-product-${product.id}`} className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => handleOpenEdit(product)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" data-testid={`button-delete-product-${product.id}`} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => {
+                              if (confirm("Are you sure you want to delete this product?")) deleteProduct.mutate(product.id);
+                            }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -175,7 +207,7 @@ export default function Products() {
                   <FormItem>
                     <FormLabel className="text-foreground">Product Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Enterprise License" className="rounded-xl border-border/60" {...field} />
+                      <Input placeholder="e.g. Enterprise License" data-testid="input-product-name" className="rounded-xl border-border/60" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -189,7 +221,7 @@ export default function Products() {
                     <FormItem>
                       <FormLabel>Category</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Software" className="rounded-xl border-border/60" {...field} />
+                        <Input placeholder="e.g. Software" data-testid="input-product-category" className="rounded-xl border-border/60" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -202,7 +234,7 @@ export default function Products() {
                     <FormItem>
                       <FormLabel>Base Price ($)</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" className="rounded-xl border-border/60" {...field} />
+                        <Input type="number" step="0.01" data-testid="input-product-base-price" className="rounded-xl border-border/60" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -211,12 +243,35 @@ export default function Products() {
               </div>
               <FormField
                 control={form.control}
+                name="cost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Cost ($) <span className="text-muted-foreground font-normal text-xs">— optional, used for margin analysis</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="e.g. 4000"
+                        data-testid="input-product-cost"
+                        className="rounded-xl border-border/60"
+                        value={field.value ?? ""}
+                        onChange={e => field.onChange(e.target.value === "" ? undefined : e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input placeholder="Brief description..." className="rounded-xl border-border/60" {...field} value={field.value || ""} />
+                      <Input placeholder="Brief description..." data-testid="input-product-description" className="rounded-xl border-border/60" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -224,7 +279,7 @@ export default function Products() {
               />
               <DialogFooter className="pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} className="rounded-xl">Cancel</Button>
-                <Button type="submit" disabled={createProduct.isPending || updateProduct.isPending} className="rounded-xl shadow-md shadow-primary/20">
+                <Button type="submit" data-testid="button-save-product" disabled={createProduct.isPending || updateProduct.isPending} className="rounded-xl shadow-md shadow-primary/20">
                   {createProduct.isPending || updateProduct.isPending ? "Saving..." : "Save Product"}
                 </Button>
               </DialogFooter>

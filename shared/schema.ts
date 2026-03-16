@@ -8,6 +8,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   basePrice: numeric("base_price").notNull(),
+  cost: numeric("cost"),
   category: text("category").notNull(),
 });
 
