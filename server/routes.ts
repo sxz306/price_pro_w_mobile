@@ -160,27 +160,35 @@ async function seedDatabase() {
   if (existingProducts.length === 0) {
     console.log("Seeding products...");
     const p1 = await storage.createProduct({
-      name: "Enterprise Software License",
-      description: "Annual license for up to 100 users",
+      name: "Stocked Powder A",
+      description: null,
       basePrice: "12000.00",
-      cost: "6500.00",
-      category: "Software"
+      cost: "12000.00",
+      category: "Stocked Powder"
     });
-    
+
     const p2 = await storage.createProduct({
-      name: "Implementation Consulting",
-      description: "Dedicated project manager and deployment services",
-      basePrice: "5000.00",
-      cost: "2800.00",
-      category: "Services"
+      name: "Stocked Powder B",
+      description: null,
+      basePrice: "8000.00",
+      cost: "8000.00",
+      category: "Stocked Powder"
     });
-    
+
     const p3 = await storage.createProduct({
-      name: "Premium Support SLA",
-      description: "24/7 phone support and 1hr response time",
-      basePrice: "2500.00",
-      cost: "900.00",
-      category: "Support"
+      name: "Non Stocked Powder C",
+      description: null,
+      basePrice: "6000.00",
+      cost: "6000.00",
+      category: "Non Stocked"
+    });
+
+    const p4 = await storage.createProduct({
+      name: "Non Stocked Powder D",
+      description: null,
+      basePrice: "10000.00",
+      cost: "10000.00",
+      category: "Non Stocked"
     });
 
     console.log("Seeding quotes...");
@@ -199,29 +207,29 @@ async function seedDatabase() {
     await storage.createQuoteItem({
       quoteId: q1.id,
       productId: p1.id,
-      quantity: 1,
+      quantity: 2,
       unitPrice: "12000.00"
     });
-    
+
     await storage.createQuoteItem({
       quoteId: q1.id,
-      productId: p2.id,
-      quantity: 1,
-      unitPrice: "4500.00" // discount applied
-    });
-    
-    await storage.createQuoteItem({
-      quoteId: q2.id,
-      productId: p1.id,
-      quantity: 5,
-      unitPrice: "11000.00" // bulk discount
-    });
-    
-    await storage.createQuoteItem({
-      quoteId: q2.id,
       productId: p3.id,
       quantity: 1,
-      unitPrice: "2500.00"
+      unitPrice: "6000.00"
+    });
+
+    await storage.createQuoteItem({
+      quoteId: q2.id,
+      productId: p2.id,
+      quantity: 3,
+      unitPrice: "8000.00"
+    });
+
+    await storage.createQuoteItem({
+      quoteId: q2.id,
+      productId: p4.id,
+      quantity: 1,
+      unitPrice: "10000.00"
     });
   }
 }
