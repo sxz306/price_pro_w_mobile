@@ -73,7 +73,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="overflow-hidden">
             <p className="text-sm font-semibold text-sidebar-foreground truncate">Sales Rep</p>
-            <p className="text-xs text-sidebar-foreground/50 truncate">rep@priceflow.com</p>
+            <p className="text-xs text-sidebar-foreground/50 truncate">rep@pcg.com</p>
           </div>
         </div>
       </div>
