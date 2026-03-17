@@ -118,8 +118,8 @@ export default function QuoteDetails() {
   }, [items, products]);
 
   const grossMargin =
-    totalCost != null && quotedPrice > 0
-      ? ((quotedPrice - totalCost) / quotedPrice) * 100
+    totalCost != null && totalCost > 0
+      ? ((quotedPrice - totalCost) / totalCost) * 100
       : null;
 
   // Sync base total to backend
