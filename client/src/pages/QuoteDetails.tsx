@@ -263,7 +263,8 @@ export default function QuoteDetails() {
                                   data-testid={`button-delete-item-${item.id}`}
                                   variant="ghost" size="icon"
                                   className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => deleteItem.mutate(item.id)}
+                                  disabled={deleteItem.isPending}
+                                  onClick={() => { if (confirm("Remove this item?")) deleteItem.mutate(item.id); }}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -446,6 +447,9 @@ export default function QuoteDetails() {
                     </Button>
                     <Button data-testid="button-mark-lost" onClick={() => handleStatusChange("rejected")} variant="outline" className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900/50 dark:hover:bg-red-900/30">
                       <XCircle className="w-4 h-4 mr-1" /> Lost
+                    </Button>
+                    <Button data-testid="button-revert-draft-sent" onClick={() => handleStatusChange("draft")} variant="outline" className="col-span-2 rounded-xl text-muted-foreground">
+                      Revert to Draft
                     </Button>
                   </>
                 )}
