@@ -306,7 +306,7 @@ export default function QuoteDetails() {
                           <p className="font-semibold text-foreground">{product?.name || `Product #${item.productId}`}</p>
                           <p className="text-sm text-muted-foreground mt-0.5">
                             {unitCost != null
-                              ? <>cost: {formatCurrency(unitCost)} × {item.quantity} = {formatCurrency(lineCost)}</>
+                              ? <>Line cost: {formatCurrency(unitCost)} × {item.quantity} = {formatCurrency(lineCost)}</>
                               : <>{item.quantity} × {formatCurrency(item.unitPrice)}</>
                             }
                           </p>
