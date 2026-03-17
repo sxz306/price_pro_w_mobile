@@ -162,6 +162,20 @@ export async function registerRoutes(
     }
   });
 
+  app.patch(api.quoteItems.update.path, async (req, res) => {
+    try {
+      const input = api.quoteItems.update.input.parse(req.body);
+      const item = await storage.updateQuoteItem(Number(req.params.id), input);
+      if (!item) return res.status(404).json({ message: 'Item not found' });
+      res.json(item);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
   app.delete(api.quoteItems.delete.path, async (req, res) => {
     await storage.deleteQuoteItem(Number(req.params.id));
     res.status(204).send();

@@ -36,6 +36,7 @@ export const quoteItems = pgTable("quote_items", {
   productId: integer("product_id").notNull(),
   quantity: integer("quantity").notNull(),
   unitPrice: numeric("unit_price").notNull(),
+  priceMultiplier: numeric("price_multiplier").notNull().default('1'),
 });
 
 // === BASE SCHEMAS ===

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Layout } from "@/components/Layout";
 import { useRoute } from "wouter";
 import { useQuote, useUpdateQuote } from "@/hooks/use-quotes";
-import { useQuoteItems, useCreateQuoteItem, useDeleteQuoteItem } from "@/hooks/use-quote-items";
+import { useQuoteItems, useCreateQuoteItem, useUpdateQuoteItem, useDeleteQuoteItem } from "@/hooks/use-quote-items";
 import { useProducts } from "@/hooks/use-products";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,15 +64,30 @@ export default function QuoteDetails() {
 
   const updateQuote = useUpdateQuote();
   const createItem = useCreateQuoteItem(quoteId);
+  const updateItem = useUpdateQuoteItem(quoteId);
   const deleteItem = useDeleteQuoteItem(quoteId);
 
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
 
-  // Per-item price multipliers: itemId → multiplier (default 1.0)
+  // Per-item price multipliers: itemId → multiplier, seeded from DB values
   const [multipliers, setMultipliers] = useState<Record<number, number>>({});
   const getMult = (id: number) => multipliers[id] ?? 1.0;
   const setMult = (id: number, val: number) =>
     setMultipliers((prev) => ({ ...prev, [id]: val }));
+
+  // Initialise multipliers from DB when items load (only for unseen item ids)
+  useEffect(() => {
+    if (!items) return;
+    setMultipliers((prev) => {
+      const next = { ...prev };
+      for (const item of items) {
+        if (!(item.id in next)) {
+          next[item.id] = parseFloat(String(item.priceMultiplier ?? '1'));
+        }
+      }
+      return next;
+    });
+  }, [items]);
 
   const form = useForm<z.infer<typeof itemFormSchema>>({
     resolver: zodResolver(itemFormSchema),
@@ -319,6 +334,11 @@ export default function QuoteDetails() {
                         </div>
                       </div>
 
+                      {quote.status !== 'draft' && (
+                        <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
+                          <span>🔒</span> Pricing is locked — revert to Draft to make changes.
+                        </p>
+                      )}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         {/* Slider */}
                         <div className="space-y-4">
@@ -330,6 +350,8 @@ export default function QuoteDetails() {
                               step={1}
                               value={[Math.round(mult * 100)]}
                               onValueChange={([val]) => setMult(item.id, val / 100)}
+                              onValueCommit={([val]) => updateItem.mutate({ id: item.id, priceMultiplier: String(val / 100) })}
+                              disabled={quote.status !== 'draft'}
                               className="w-full"
                             />
                             <div className="flex justify-between text-xs text-muted-foreground">

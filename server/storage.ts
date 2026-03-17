@@ -33,6 +33,7 @@ export interface IStorage {
   // Quote Items
   getQuoteItems(quoteId: number): Promise<QuoteItem[]>;
   createQuoteItem(item: InsertQuoteItem): Promise<QuoteItem>;
+  updateQuoteItem(id: number, updates: { priceMultiplier: string }): Promise<QuoteItem | undefined>;
   deleteQuoteItem(id: number): Promise<void>;
   updateQuoteTotal(quoteId: number): Promise<void>;
 }
@@ -129,6 +130,14 @@ export class DatabaseStorage implements IStorage {
     const [newItem] = await db.insert(quoteItems).values(item).returning();
     await this.updateQuoteTotal(item.quoteId);
     return newItem;
+  }
+
+  async updateQuoteItem(id: number, updates: { priceMultiplier: string }): Promise<QuoteItem | undefined> {
+    const [updated] = await db.update(quoteItems)
+      .set(updates)
+      .where(eq(quoteItems.id, id))
+      .returning();
+    return updated;
   }
 
   async deleteQuoteItem(id: number): Promise<void> {

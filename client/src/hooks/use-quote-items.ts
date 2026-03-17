@@ -36,11 +36,32 @@ export function useCreateQuoteItem(quoteId: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.quoteItems.list.path, quoteId] });
-      queryClient.invalidateQueries({ queryKey: [api.quotes.get.path, quoteId] }); // in case total updates
+      queryClient.invalidateQueries({ queryKey: [api.quotes.get.path, quoteId] });
       toast({ title: "Item added to quote", variant: "default" });
     },
     onError: (error: Error) => {
       toast({ title: "Failed to add item", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
+export function useUpdateQuoteItem(quoteId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, priceMultiplier }: { id: number; priceMultiplier: string }) => {
+      const url = buildUrl(api.quoteItems.update.path, { quoteId, id });
+      const res = await fetch(url, {
+        method: api.quoteItems.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceMultiplier }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update item");
+      return res.json() as Promise<QuoteItem>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.quoteItems.list.path, quoteId] });
     },
   });
 }
@@ -60,7 +81,7 @@ export function useDeleteQuoteItem(quoteId: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.quoteItems.list.path, quoteId] });
-      queryClient.invalidateQueries({ queryKey: [api.quotes.get.path, quoteId] }); // in case total updates
+      queryClient.invalidateQueries({ queryKey: [api.quotes.get.path, quoteId] });
       toast({ title: "Item removed from quote", variant: "default" });
     },
     onError: (error: Error) => {

@@ -107,6 +107,12 @@ export const api = {
       input: insertQuoteItemSchema.omit({ quoteId: true }),
       responses: { 201: z.custom<typeof quoteItems.$inferSelect>(), 400: errorSchemas.validation },
     },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/quotes/:quoteId/items/:id' as const,
+      input: z.object({ priceMultiplier: z.string() }),
+      responses: { 200: z.custom<typeof quoteItems.$inferSelect>(), 404: errorSchemas.notFound },
+    },
     delete: {
       method: 'DELETE' as const,
       path: '/api/quotes/:quoteId/items/:id' as const,
