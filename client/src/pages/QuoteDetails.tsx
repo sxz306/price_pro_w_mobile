@@ -295,9 +295,6 @@ export default function QuoteDetails() {
                   const adjLinePrice = baseLinePrice * mult;
                   const unitCost = product?.cost ? parseFloat(product.cost) : null;
                   const lineCost = unitCost != null ? item.quantity * unitCost : null;
-                  const itemMargin = lineCost != null && adjLinePrice > 0
-                    ? ((adjLinePrice - lineCost) / adjLinePrice) * 100
-                    : null;
                   const winRate = calcWinRate(mult);
                   const expectedRevenue = (winRate / 100) * adjLinePrice;
 
@@ -308,8 +305,10 @@ export default function QuoteDetails() {
                         <div>
                           <p className="font-semibold text-foreground">{product?.name || `Product #${item.productId}`}</p>
                           <p className="text-sm text-muted-foreground mt-0.5">
-                            {item.quantity} × {formatCurrency(item.unitPrice)} base
-                            {lineCost != null && <span> · cost {formatCurrency(lineCost)}</span>}
+                            {unitCost != null
+                              ? <>cost: {formatCurrency(unitCost)} × {item.quantity} = {formatCurrency(lineCost)}</>
+                              : <>{item.quantity} × {formatCurrency(item.unitPrice)}</>
+                            }
                           </p>
                         </div>
                         <div className="text-right">
@@ -340,20 +339,12 @@ export default function QuoteDetails() {
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">vs. base price</span>
-                            <span className={`font-medium ${mult > 1 ? "text-amber-600 dark:text-amber-400" : mult < 1 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
-                              {mult > 1 ? "+" : ""}{((mult - 1) * 100).toFixed(0)}%
-                              {" "}({formatCurrency(adjLinePrice - baseLinePrice)})
-                            </span>
-                          </div>
-
                           {lineCost != null && (
                             <div className="flex items-center justify-between text-sm pt-3 border-t border-border/30">
-                              <span className="text-muted-foreground">Gross profit</span>
+                              <span className="text-muted-foreground">Gross profit (vs. cost)</span>
                               <span className={`font-semibold ${adjLinePrice > lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                                 {formatCurrency(adjLinePrice - lineCost)}
-                                {itemMargin != null && <span className="font-normal text-xs ml-1">({itemMargin.toFixed(1)}%)</span>}
+                                {lineCost > 0 && <span className="font-normal text-xs ml-1">({(((adjLinePrice - lineCost) / lineCost) * 100).toFixed(1)}%)</span>}
                               </span>
                             </div>
                           )}
