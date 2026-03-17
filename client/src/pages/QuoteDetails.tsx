@@ -170,8 +170,8 @@ export default function QuoteDetails() {
                   {quote.customerEmail && <p className="text-sm text-muted-foreground mt-1">{quote.customerEmail}</p>}
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className="text-sm font-medium text-muted-foreground">Base Line Total</span>
-                  <span className="text-4xl font-display font-bold text-primary">{formatCurrency(calculatedTotal)}</span>
+                  <span className="text-sm font-medium text-muted-foreground">Quoted Price</span>
+                  <span className="text-4xl font-display font-bold text-primary">{formatCurrency(quotedPrice)}</span>
                 </div>
               </div>
 
@@ -210,10 +210,10 @@ export default function QuoteDetails() {
                   <TableHeader className="bg-muted/30">
                     <TableRow className="hover:bg-transparent">
                       <TableHead>Product</TableHead>
+                      <TableHead className="text-right text-muted-foreground">Unit Cost</TableHead>
                       <TableHead className="text-right">Qty</TableHead>
-                      <TableHead className="text-right">Unit Price</TableHead>
-                      {totalCost != null && <TableHead className="text-right text-muted-foreground">Unit Cost</TableHead>}
-                      <TableHead className="text-right font-semibold">Line Total</TableHead>
+                      <TableHead className="text-right text-muted-foreground">Line Cost</TableHead>
+                      <TableHead className="text-right font-semibold">Line Price</TableHead>
                       {quote.status === 'draft' && <TableHead className="w-[80px]"></TableHead>}
                     </TableRow>
                   </TableHeader>
@@ -230,8 +230,9 @@ export default function QuoteDetails() {
                     ) : (
                       items.map((item) => {
                         const product = products?.find(p => p.id === item.productId);
-                        const lineTotal = item.quantity * parseFloat(item.unitPrice);
-                        const lineCost = product?.cost ? item.quantity * parseFloat(product.cost) : null;
+                        const linePrice = item.quantity * parseFloat(item.unitPrice);
+                        const unitCost = product?.cost ? parseFloat(product.cost) : null;
+                        const lineCost = unitCost != null ? item.quantity * unitCost : null;
                         return (
                           <TableRow key={item.id} data-testid={`row-item-${item.id}`}>
                             <TableCell className="font-medium">
@@ -240,12 +241,10 @@ export default function QuoteDetails() {
                                 <span className="ml-2 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{product.category}</span>
                               )}
                             </TableCell>
+                            <TableCell className="text-right text-muted-foreground text-sm">{unitCost != null ? formatCurrency(unitCost) : "—"}</TableCell>
                             <TableCell className="text-right">{item.quantity}</TableCell>
-                            <TableCell className="text-right text-muted-foreground">{formatCurrency(item.unitPrice)}</TableCell>
-                            {totalCost != null && (
-                              <TableCell className="text-right text-muted-foreground text-sm">{lineCost != null ? formatCurrency(lineCost / item.quantity) : "—"}</TableCell>
-                            )}
-                            <TableCell className="text-right font-semibold">{formatCurrency(lineTotal)}</TableCell>
+                            <TableCell className="text-right text-muted-foreground text-sm">{lineCost != null ? formatCurrency(lineCost) : "—"}</TableCell>
+                            <TableCell className="text-right font-semibold">{formatCurrency(linePrice)}</TableCell>
                             {quote.status === 'draft' && (
                               <TableCell className="text-right">
                                 <Button data-testid={`button-delete-item-${item.id}`} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => deleteItem.mutate(item.id)}>
