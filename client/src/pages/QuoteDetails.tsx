@@ -230,7 +230,7 @@ export default function QuoteDetails() {
                     ) : (
                       items.map((item) => {
                         const product = products?.find(p => p.id === item.productId);
-                        const linePrice = item.quantity * parseFloat(item.unitPrice);
+                        const linePrice = item.quantity * parseFloat(item.unitPrice) * priceMultiplier;
                         const unitCost = product?.cost ? parseFloat(product.cost) : null;
                         const lineCost = unitCost != null ? item.quantity * unitCost : null;
                         return (
@@ -422,8 +422,8 @@ export default function QuoteDetails() {
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Line total</span>
-                  <span className="font-medium">{formatCurrency(calculatedTotal)}</span>
+                  <span className="text-muted-foreground">Quoted price</span>
+                  <span className="font-medium">{formatCurrency(quotedPrice)}</span>
                 </div>
                 {totalCost != null && (
                   <div className="flex justify-between">
