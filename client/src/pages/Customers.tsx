@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Pencil, Trash2, Search, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertCustomerSchema } from "@shared/schema";
@@ -44,6 +44,27 @@ export default function Customers() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
+  type SortKey = 'id' | 'name' | 'size' | 'region' | 'email';
+  type SortDir = 'asc' | 'desc';
+  const [sortKey, setSortKey] = useState<SortKey>('id');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3.5 h-3.5 ml-1 opacity-40" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="w-3.5 h-3.5 ml-1" />
+      : <ArrowDown className="w-3.5 h-3.5 ml-1" />;
+  };
+
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
     defaultValues: { name: "", size: "medium", region: "East", email: "" },
@@ -70,11 +91,23 @@ export default function Customers() {
     }
   };
 
-  const filtered = customerList?.filter(c =>
+  const sizeOrder: Record<string, number> = { xlarge: 0, large: 1, medium: 2, small: 3 };
+
+  const filtered = (customerList?.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.region.toLowerCase().includes(search.toLowerCase()) ||
     c.size.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  ) || []).sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case 'id': cmp = a.id - b.id; break;
+      case 'name': cmp = a.name.localeCompare(b.name); break;
+      case 'size': cmp = (sizeOrder[a.size] ?? 99) - (sizeOrder[b.size] ?? 99); break;
+      case 'region': cmp = a.region.localeCompare(b.region); break;
+      case 'email': cmp = (a.email || '').localeCompare(b.email || ''); break;
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
 
   const Badge = ({ label, colorMap }: { label: string; colorMap: Record<string, string> }) => (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide border ${colorMap[label] || "bg-gray-100 text-gray-700 border-gray-200"}`}>
@@ -114,23 +147,34 @@ export default function Customers() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold text-foreground">Name</TableHead>
-                  <TableHead className="font-semibold text-foreground">Size</TableHead>
-                  <TableHead className="font-semibold text-foreground">Region</TableHead>
-                  <TableHead className="font-semibold text-foreground hidden sm:table-cell">Email</TableHead>
+                  <TableHead className="font-semibold text-foreground w-[60px] cursor-pointer select-none" onClick={() => toggleSort('id')} data-testid="sort-customer-id">
+                    <span className="inline-flex items-center">ID<SortIcon col="id" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground cursor-pointer select-none" onClick={() => toggleSort('name')} data-testid="sort-customer-name">
+                    <span className="inline-flex items-center">Name<SortIcon col="name" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground cursor-pointer select-none" onClick={() => toggleSort('size')} data-testid="sort-customer-size">
+                    <span className="inline-flex items-center">Size<SortIcon col="size" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground cursor-pointer select-none" onClick={() => toggleSort('region')} data-testid="sort-customer-region">
+                    <span className="inline-flex items-center">Region<SortIcon col="region" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground hidden sm:table-cell cursor-pointer select-none" onClick={() => toggleSort('email')} data-testid="sort-customer-email">
+                    <span className="inline-flex items-center">Email<SortIcon col="email" /></span>
+                  </TableHead>
                   <TableHead className="font-semibold text-foreground w-[100px] text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                       <div className="flex justify-center"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>
                     </TableCell>
                   </TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
                       <Users className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
                       <p>No customers found.</p>
                     </TableCell>
@@ -138,6 +182,7 @@ export default function Customers() {
                 ) : (
                   filtered.map((customer) => (
                     <TableRow key={customer.id} data-testid={`row-customer-${customer.id}`} className="group hover:bg-muted/20 transition-colors">
+                      <TableCell className="font-mono text-muted-foreground">#{customer.id}</TableCell>
                       <TableCell className="font-medium text-foreground">{customer.name}</TableCell>
                       <TableCell><Badge label={customer.size} colorMap={SIZE_COLORS} /></TableCell>
                       <TableCell><Badge label={customer.region} colorMap={REGION_COLORS} /></TableCell>
