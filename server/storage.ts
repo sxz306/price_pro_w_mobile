@@ -123,7 +123,7 @@ export class DatabaseStorage implements IStorage {
 
   // Quote Items
   async getQuoteItems(quoteId: number): Promise<QuoteItem[]> {
-    return await db.select().from(quoteItems).where(eq(quoteItems.quoteId, quoteId));
+    return await db.select().from(quoteItems).where(eq(quoteItems.quoteId, quoteId)).orderBy(quoteItems.id);
   }
 
   async createQuoteItem(item: InsertQuoteItem): Promise<QuoteItem> {
