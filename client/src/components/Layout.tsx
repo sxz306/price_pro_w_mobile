@@ -52,7 +52,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/25">
           <FileText className="w-4 h-4 text-primary-foreground" />
         </div>
-        <h1 className="text-lg font-display font-bold tracking-tight text-sidebar-foreground">PCG_Quote_n_Price</h1>
+        <h1 className="text-lg font-display font-bold tracking-tight text-sidebar-foreground">Price Pro</h1>
       </div>
 
       <p className="px-4 mb-2 text-[11px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">Navigation</p>
@@ -75,7 +75,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="overflow-hidden">
             <p className="text-sm font-semibold text-sidebar-foreground truncate">Sales Rep</p>
-            <p className="text-xs text-sidebar-foreground/50 truncate">rep@pcg.com</p>
+            <p className="text-xs text-sidebar-foreground/50 truncate">rep@pricepro.com</p>
           </div>
         </div>
       </div>
