@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Search, ArrowRight } from "lucide-react";
+import { Plus, Trash2, Search, ArrowRight, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -59,6 +59,27 @@ export default function Quotes() {
   const [search, setSearch] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  type SortKey = 'id' | 'customer' | 'date' | 'status' | 'totalCost' | 'quotedPrice';
+  type SortDir = 'asc' | 'desc';
+  const [sortKey, setSortKey] = useState<SortKey>('id');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3.5 h-3.5 ml-1 opacity-40" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="w-3.5 h-3.5 ml-1" />
+      : <ArrowDown className="w-3.5 h-3.5 ml-1" />;
+  };
 
   const form = useForm<NewQuoteForm>({
     resolver: zodResolver(newQuoteSchema),
@@ -116,10 +137,25 @@ export default function Quotes() {
   const formatCurrency = (val: string) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(parseFloat(val || "0"));
 
-  const filteredQuotes = quotes?.filter(q =>
+  const statusOrder: Record<string, number> = { draft: 0, sent: 1, accepted: 2, rejected: 3 };
+
+  const filteredQuotes = (quotes?.filter(q =>
     q.customerName.toLowerCase().includes(search.toLowerCase()) ||
     (q.customerEmail && q.customerEmail.toLowerCase().includes(search.toLowerCase()))
-  ) || [];
+  ) || []).sort((a, b) => {
+    let cmp = 0;
+    const aTotals = quoteTotals(a.id);
+    const bTotals = quoteTotals(b.id);
+    switch (sortKey) {
+      case 'id': cmp = a.id - b.id; break;
+      case 'customer': cmp = a.customerName.localeCompare(b.customerName); break;
+      case 'date': cmp = new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime(); break;
+      case 'status': cmp = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99); break;
+      case 'totalCost': cmp = aTotals.totalCost - bTotals.totalCost; break;
+      case 'quotedPrice': cmp = aTotals.quotedPrice - bTotals.quotedPrice; break;
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
 
   const StatusBadge = ({ status }: { status: string }) => {
     const styles: Record<string, string> = {
@@ -167,12 +203,24 @@ export default function Quotes() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold text-foreground w-[60px]">ID</TableHead>
-                  <TableHead className="font-semibold text-foreground">Customer</TableHead>
-                  <TableHead className="font-semibold text-foreground hidden sm:table-cell">Date</TableHead>
-                  <TableHead className="font-semibold text-foreground">Status</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right">Total Cost</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right">Quoted Price</TableHead>
+                  <TableHead className="font-semibold text-foreground w-[60px] cursor-pointer select-none" onClick={() => toggleSort('id')} data-testid="sort-id">
+                    <span className="inline-flex items-center">ID<SortIcon col="id" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground cursor-pointer select-none" onClick={() => toggleSort('customer')} data-testid="sort-customer">
+                    <span className="inline-flex items-center">Customer<SortIcon col="customer" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground hidden sm:table-cell cursor-pointer select-none" onClick={() => toggleSort('date')} data-testid="sort-date">
+                    <span className="inline-flex items-center">Date<SortIcon col="date" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground cursor-pointer select-none" onClick={() => toggleSort('status')} data-testid="sort-status">
+                    <span className="inline-flex items-center">Status<SortIcon col="status" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('totalCost')} data-testid="sort-total-cost">
+                    <span className="inline-flex items-center justify-end">Total Cost<SortIcon col="totalCost" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('quotedPrice')} data-testid="sort-quoted-price">
+                    <span className="inline-flex items-center justify-end">Quoted Price<SortIcon col="quotedPrice" /></span>
+                  </TableHead>
                   <TableHead className="font-semibold text-foreground w-[120px] text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
