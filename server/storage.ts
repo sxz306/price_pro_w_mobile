@@ -31,6 +31,7 @@ export interface IStorage {
   deleteQuote(id: number): Promise<void>;
 
   // Quote Items
+  getAllQuoteItems(): Promise<QuoteItem[]>;
   getQuoteItems(quoteId: number): Promise<QuoteItem[]>;
   createQuoteItem(item: InsertQuoteItem): Promise<QuoteItem>;
   updateQuoteItem(id: number, updates: { priceMultiplier: string }): Promise<QuoteItem | undefined>;
@@ -122,6 +123,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Quote Items
+  async getAllQuoteItems(): Promise<QuoteItem[]> {
+    return await db.select().from(quoteItems).orderBy(quoteItems.id);
+  }
+
   async getQuoteItems(quoteId: number): Promise<QuoteItem[]> {
     return await db.select().from(quoteItems).where(eq(quoteItems.quoteId, quoteId)).orderBy(quoteItems.id);
   }

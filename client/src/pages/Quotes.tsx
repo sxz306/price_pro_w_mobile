@@ -3,6 +3,9 @@ import { Layout } from "@/components/Layout";
 import { useQuotes, useCreateQuote, useDeleteQuote } from "@/hooks/use-quotes";
 import { useCustomers } from "@/hooks/use-customers";
 import { useProducts } from "@/hooks/use-products";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, buildUrl } from "@shared/routes";
+import type { QuoteItem } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,9 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link, useLocation } from "wouter";
-import { api, buildUrl } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
 
 const newQuoteSchema = z.object({
   customerId: z.string().min(1, "Please select a customer"),
@@ -29,6 +30,27 @@ export default function Quotes() {
   const { data: quotes, isLoading } = useQuotes();
   const { data: customers } = useCustomers();
   const { data: products } = useProducts();
+  const { data: allItems } = useQuery<QuoteItem[]>({
+    queryKey: [api.quoteItems.listAll.path],
+    queryFn: async () => {
+      const res = await fetch(api.quoteItems.listAll.path, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch items");
+      return res.json();
+    },
+  });
+
+  const quoteTotals = (quoteId: number) => {
+    const items = allItems?.filter(i => i.quoteId === quoteId) || [];
+    let totalCost = 0;
+    let quotedPrice = 0;
+    for (const item of items) {
+      const cost = parseFloat(String(item.unitPrice)) * item.quantity;
+      const mult = parseFloat(String(item.priceMultiplier ?? '1'));
+      totalCost += cost;
+      quotedPrice += cost * mult;
+    }
+    return { totalCost, quotedPrice };
+  };
   const deleteQuote = useDeleteQuote();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -145,30 +167,35 @@ export default function Quotes() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold text-foreground w-[60px]">ID</TableHead>
                   <TableHead className="font-semibold text-foreground">Customer</TableHead>
                   <TableHead className="font-semibold text-foreground hidden sm:table-cell">Date</TableHead>
                   <TableHead className="font-semibold text-foreground">Status</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right">Total Amount</TableHead>
+                  <TableHead className="font-semibold text-foreground text-right">Total Cost</TableHead>
+                  <TableHead className="font-semibold text-foreground text-right">Quoted Price</TableHead>
                   <TableHead className="font-semibold text-foreground w-[120px] text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                       <div className="flex justify-center"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>
                     </TableCell>
                   </TableRow>
                 ) : filteredQuotes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
                       <Search className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
                       <p>No quotes found.</p>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredQuotes.map((quote) => (
+                  filteredQuotes.map((quote) => {
+                    const { totalCost, quotedPrice } = quoteTotals(quote.id);
+                    return (
                     <TableRow key={quote.id} data-testid={`row-quote-${quote.id}`} className="group hover:bg-muted/20 transition-colors">
+                      <TableCell className="font-mono text-muted-foreground">#{quote.id}</TableCell>
                       <TableCell>
                         <div className="font-medium text-foreground">{quote.customerName}</div>
                         {quote.customerEmail && <div className="text-sm text-muted-foreground">{quote.customerEmail}</div>}
@@ -177,7 +204,8 @@ export default function Quotes() {
                         {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString() : "—"}
                       </TableCell>
                       <TableCell><StatusBadge status={quote.status} /></TableCell>
-                      <TableCell className="text-right font-display font-semibold text-base">{formatCurrency(quote.totalAmount)}</TableCell>
+                      <TableCell className="text-right font-display font-semibold text-base">{formatCurrency(String(totalCost))}</TableCell>
+                      <TableCell className="text-right font-display font-semibold text-base">{formatCurrency(String(quotedPrice))}</TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-2">
                           <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" data-testid={`button-open-quote-${quote.id}`}>
@@ -194,7 +222,8 @@ export default function Quotes() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

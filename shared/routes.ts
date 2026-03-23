@@ -96,6 +96,11 @@ export const api = {
     },
   },
   quoteItems: {
+    listAll: {
+      method: 'GET' as const,
+      path: '/api/quote-items' as const,
+      responses: { 200: z.array(z.custom<typeof quoteItems.$inferSelect>()) },
+    },
     list: {
       method: 'GET' as const,
       path: '/api/quotes/:quoteId/items' as const,

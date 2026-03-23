@@ -141,6 +141,11 @@ export async function registerRoutes(
   });
 
   // === QUOTE ITEMS ===
+  app.get(api.quoteItems.listAll.path, async (req, res) => {
+    const items = await storage.getAllQuoteItems();
+    res.json(items);
+  });
+
   app.get(api.quoteItems.list.path, async (req, res) => {
     const items = await storage.getQuoteItems(Number(req.params.quoteId));
     res.json(items);
