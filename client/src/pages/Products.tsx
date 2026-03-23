@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/hooks/use-products";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2, PackageSearch } from "lucide-react";
+import { Plus, Edit2, Trash2, PackageSearch, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertProductSchema } from "@shared/schema";
@@ -27,6 +27,27 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  type SortKey = 'id' | 'name' | 'category' | 'cost';
+  type SortDir = 'asc' | 'desc';
+  const [sortKey, setSortKey] = useState<SortKey>('id');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3.5 h-3.5 ml-1 opacity-40" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="w-3.5 h-3.5 ml-1" />
+      : <ArrowDown className="w-3.5 h-3.5 ml-1" />;
+  };
 
   const form = useForm<z.infer<typeof productFormSchema>>({
     resolver: zodResolver(productFormSchema),
@@ -79,19 +100,19 @@ export default function Products() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(parseFloat(val));
   };
 
-  const formatMargin = (basePrice: string, cost: string | null | undefined) => {
-    if (!cost) return null;
-    const bp = parseFloat(basePrice);
-    const c = parseFloat(cost);
-    if (bp === 0) return null;
-    const margin = ((bp - c) / bp) * 100;
-    return margin;
-  };
-
-  const filteredProducts = products?.filter(p =>
+  const filteredProducts = (products?.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.category.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  ) || []).sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case 'id': cmp = a.id - b.id; break;
+      case 'name': cmp = a.name.localeCompare(b.name); break;
+      case 'category': cmp = a.category.localeCompare(b.category); break;
+      case 'cost': cmp = parseFloat(a.cost || '0') - parseFloat(b.cost || '0'); break;
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
 
   return (
     <Layout>
@@ -125,34 +146,40 @@ export default function Products() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-semibold text-foreground">Name</TableHead>
-                  <TableHead className="font-semibold text-foreground hidden md:table-cell">Category</TableHead>
+                  <TableHead className="font-semibold text-foreground w-[60px] cursor-pointer select-none" onClick={() => toggleSort('id')} data-testid="sort-product-id">
+                    <span className="inline-flex items-center">ID<SortIcon col="id" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground cursor-pointer select-none" onClick={() => toggleSort('name')} data-testid="sort-product-name">
+                    <span className="inline-flex items-center">Name<SortIcon col="name" /></span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground hidden md:table-cell cursor-pointer select-none" onClick={() => toggleSort('category')} data-testid="sort-product-category">
+                    <span className="inline-flex items-center">Category<SortIcon col="category" /></span>
+                  </TableHead>
                   <TableHead className="font-semibold text-foreground hidden lg:table-cell">Description</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right">Unit Cost</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right">Base Price</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right hidden sm:table-cell">Margin</TableHead>
+                  <TableHead className="font-semibold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('cost')} data-testid="sort-product-cost">
+                    <span className="inline-flex items-center justify-end">Unit Cost<SortIcon col="cost" /></span>
+                  </TableHead>
                   <TableHead className="font-semibold text-foreground w-[120px] text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                       <div className="flex justify-center"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div></div>
                     </TableCell>
                   </TableRow>
                 ) : filteredProducts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-48 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
                       <PackageSearch className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
                       <p>No products found.</p>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredProducts.map((product) => {
-                    const margin = formatMargin(product.basePrice, product.cost);
-                    return (
+                  filteredProducts.map((product) => (
                       <TableRow key={product.id} data-testid={`row-product-${product.id}`} className="group hover:bg-muted/20 transition-colors">
+                        <TableCell className="font-mono text-muted-foreground">#{product.id}</TableCell>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground border border-border/50">
@@ -161,16 +188,6 @@ export default function Products() {
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-muted-foreground truncate max-w-xs">{product.description}</TableCell>
                         <TableCell className="text-right text-muted-foreground">{formatCurrency(product.cost)}</TableCell>
-                        <TableCell className="text-right font-medium">{formatCurrency(product.basePrice)}</TableCell>
-                        <TableCell className="text-right hidden sm:table-cell">
-                          {margin != null ? (
-                            <span className={`text-sm font-medium ${margin >= 50 ? 'text-emerald-600 dark:text-emerald-400' : margin >= 25 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
-                              {margin.toFixed(1)}%
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">—</span>
-                          )}
-                        </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button variant="ghost" size="icon" data-testid={`button-edit-product-${product.id}`} className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => handleOpenEdit(product)}>
@@ -184,8 +201,7 @@ export default function Products() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    );
-                  })
+                  ))
                 )}
               </TableBody>
             </Table>
