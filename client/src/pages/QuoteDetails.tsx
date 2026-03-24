@@ -455,15 +455,18 @@ export default function QuoteDetails() {
                               <div className="rounded-xl border border-border/50 bg-muted/20 overflow-hidden">
                                 <div className="grid grid-cols-3 divide-x divide-border/50">
                                   {(() => {
-                                    const margin = lineCost != null ? adjLinePrice - lineCost : null;
                                     const marginPct = lineCost != null && lineCost > 0 ? ((adjLinePrice - lineCost) / lineCost) * 100 : null;
-                                    const marginPerDay = margin != null ? margin / daysToSell : null;
-                                    const margin30 = margin != null ? margin * (win30 / 100) : null;
+                                    const marginPerDay = marginPct != null ? marginPct / daysToSell : null;
+                                    const margin30 = marginPct != null ? marginPct * (win30 / 100) : null;
                                     const marginColor = (val: number | null) => {
                                       if (val == null) return "text-muted-foreground";
                                       if (val > 0) return "text-emerald-600 dark:text-emerald-400";
                                       if (val < 0) return "text-red-600 dark:text-red-400";
                                       return "text-muted-foreground";
+                                    };
+                                    const fmtPct = (val: number | null) => {
+                                      if (val == null) return "—";
+                                      return `${val >= 0 ? "+" : ""}${val.toFixed(2)}%`;
                                     };
                                     return (
                                       <>
@@ -472,14 +475,13 @@ export default function QuoteDetails() {
                                             <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
                                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Margin at<br />Current Price</p>
                                           </div>
-                                          <div className={`text-2xl font-display font-bold tabular-nums ${marginColor(margin)}`} data-testid={`text-margin-${item.id}`}>
-                                            {margin != null ? formatCurrency(margin) : "—"}
+                                          <div className={`text-2xl font-display font-bold tabular-nums ${marginColor(marginPct)}`} data-testid={`text-margin-${item.id}`}>
+                                            {fmtPct(marginPct)}
                                           </div>
                                           <div className="mt-auto pt-3">
-                                            <p className={`text-[10px] font-medium ${marginColor(marginPct)}`}>
-                                              {marginPct != null ? `${marginPct >= 0 ? "+" : ""}${marginPct.toFixed(1)}%` : "—"}
+                                            <p className="text-[10px] text-muted-foreground font-medium">
+                                              {lineCost != null ? `(${formatCurrency(adjLinePrice)} − ${formatCurrency(lineCost)}) / ${formatCurrency(lineCost)}` : "—"}
                                             </p>
-                                            <p className="text-[10px] text-muted-foreground mt-0.5">of cost</p>
                                           </div>
                                         </div>
 
@@ -489,11 +491,11 @@ export default function QuoteDetails() {
                                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Margin<br />/ Day</p>
                                           </div>
                                           <div className={`text-2xl font-display font-bold tabular-nums ${marginColor(marginPerDay)}`} data-testid={`text-margin-per-day-${item.id}`}>
-                                            {marginPerDay != null ? formatCurrency(marginPerDay) : "—"}
+                                            {fmtPct(marginPerDay)}
                                           </div>
                                           <div className="mt-auto pt-3">
                                             <p className="text-[10px] text-muted-foreground font-medium">
-                                              {margin != null ? `${formatCurrency(margin)} ÷ ${daysToSell.toFixed(1)}d` : "—"}
+                                              {marginPct != null ? `${fmtPct(marginPct)} ÷ ${daysToSell.toFixed(1)}d` : "—"}
                                             </p>
                                           </div>
                                         </div>
@@ -504,11 +506,11 @@ export default function QuoteDetails() {
                                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Margin<br />/ 30 Days</p>
                                           </div>
                                           <div className={`text-2xl font-display font-bold tabular-nums ${marginColor(margin30)}`} data-testid={`text-margin-30d-${item.id}`}>
-                                            {margin30 != null ? formatCurrency(margin30) : "—"}
+                                            {fmtPct(margin30)}
                                           </div>
                                           <div className="mt-auto pt-3">
                                             <p className="text-[10px] text-muted-foreground font-medium">
-                                              {margin != null ? `${formatCurrency(margin)} × ${win30.toFixed(2)}%` : "—"}
+                                              {marginPct != null ? `${fmtPct(marginPct)} × ${win30.toFixed(2)}%` : "—"}
                                             </p>
                                           </div>
                                         </div>
