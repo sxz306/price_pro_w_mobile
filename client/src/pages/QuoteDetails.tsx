@@ -216,12 +216,12 @@ export default function QuoteDetails() {
                   </div>
                   <div className="text-center border-x border-border/40">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Gross Profit</p>
-                    <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400" data-testid="text-gross-profit">{formatCurrency(quotedPrice - totalCost)}</p>
+                    <p className={`text-lg font-semibold ${quotedPrice >= totalCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`} data-testid="text-gross-profit">{formatCurrency(quotedPrice - totalCost)}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Margin</p>
                     <p
-                      className={`text-lg font-semibold ${grossMargin != null && grossMargin >= 50 ? "text-emerald-600 dark:text-emerald-400" : grossMargin != null && grossMargin >= 25 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}
+                      className={`text-lg font-semibold ${grossMargin != null && grossMargin >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
                       data-testid="text-margin"
                     >
                       {grossMargin != null ? `${grossMargin.toFixed(1)}%` : "—"}
