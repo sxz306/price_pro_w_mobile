@@ -25,28 +25,34 @@ const itemFormSchema = z.object({
   unitPrice: z.coerce.number().min(0, "Price must be positive"),
 });
 
-function calcWinRate(multiplier: number): number {
-  const rate = 95 * Math.exp(-2.5 * (multiplier - 0.7));
-  return Math.max(2, Math.min(98, Math.round(rate)));
+function baselineWinRate(customerId: number, productId: number): number {
+  const hash = ((customerId * 2654435761) ^ (productId * 2246822519)) >>> 0;
+  return (hash % 4) + 2;
+}
+
+function calcWinRate(multiplier: number, customerId: number, productId: number): number {
+  const baseline = baselineWinRate(customerId, productId);
+  const rate = baseline * Math.exp(-2.5 * (multiplier - 1.0));
+  return Math.max(1, Math.min(98, Math.round(rate)));
 }
 
 function winRateColor(rate: number): string {
-  if (rate >= 65) return "text-emerald-600 dark:text-emerald-400";
-  if (rate >= 35) return "text-amber-600 dark:text-amber-400";
+  if (rate >= 8) return "text-emerald-600 dark:text-emerald-400";
+  if (rate >= 4) return "text-amber-600 dark:text-amber-400";
   return "text-red-600 dark:text-red-400";
 }
 
 function winRateBarColor(rate: number): string {
-  if (rate >= 65) return "bg-emerald-500";
-  if (rate >= 35) return "bg-amber-500";
+  if (rate >= 8) return "bg-emerald-500";
+  if (rate >= 4) return "bg-amber-500";
   return "bg-red-500";
 }
 
 function winRateLabel(rate: number): string {
-  if (rate >= 75) return "Very Likely";
-  if (rate >= 55) return "Likely";
-  if (rate >= 35) return "Possible";
-  if (rate >= 15) return "Unlikely";
+  if (rate >= 10) return "Very Likely";
+  if (rate >= 6) return "Likely";
+  if (rate >= 4) return "Possible";
+  if (rate >= 2) return "Unlikely";
   return "Long Shot";
 }
 
@@ -317,7 +323,7 @@ export default function QuoteDetails() {
                   const adjLinePrice = baseLinePrice * mult;
                   const unitCost = product?.cost ? parseFloat(product.cost) : null;
                   const lineCost = unitCost != null ? item.quantity * unitCost : null;
-                  const winRate = calcWinRate(mult);
+                  const winRate = calcWinRate(mult, quote?.customerId ?? 0, item.productId);
                   const expectedRevenue = (winRate / 100) * adjLinePrice;
 
                   return (
@@ -383,7 +389,7 @@ export default function QuoteDetails() {
                         <div className="space-y-3">
                           <div className="rounded-xl border border-border/50 p-4 bg-muted/20">
                             <div className="flex items-center justify-between mb-3">
-                              <p className="text-xs text-muted-foreground uppercase tracking-wider">Est. Win Rate</p>
+                              <p className="text-xs text-muted-foreground uppercase tracking-wider">Est. Win Rate / Day</p>
                               <span className={`text-xs font-semibold ${winRateColor(winRate)}`}>{winRateLabel(winRate)}</span>
                             </div>
                             <div className={`text-4xl font-display font-bold tabular-nums mb-2 ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
