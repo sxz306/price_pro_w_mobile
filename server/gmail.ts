@@ -50,6 +50,56 @@ export function getSenderEmail(): string {
   return email;
 }
 
+export async function getThreadReplies(threadId: string): Promise<Array<{
+  id: string;
+  from: string;
+  date: string;
+  subject: string;
+  snippet: string;
+  body: string;
+  isSender: boolean;
+}>> {
+  const gmail = await getUncachableGmailClient();
+  const senderEmail = getSenderEmail();
+
+  const thread = await gmail.users.threads.get({
+    userId: 'me',
+    id: threadId,
+    format: 'full',
+  });
+
+  const messages = thread.data.messages || [];
+
+  return messages.map((msg) => {
+    const headers = msg.payload?.headers || [];
+    const from = headers.find(h => h.name?.toLowerCase() === 'from')?.value || '';
+    const date = headers.find(h => h.name?.toLowerCase() === 'date')?.value || '';
+    const subject = headers.find(h => h.name?.toLowerCase() === 'subject')?.value || '';
+
+    let body = '';
+    if (msg.payload?.body?.data) {
+      body = Buffer.from(msg.payload.body.data, 'base64url').toString('utf-8');
+    } else if (msg.payload?.parts) {
+      const textPart = msg.payload.parts.find(p => p.mimeType === 'text/plain');
+      const htmlPart = msg.payload.parts.find(p => p.mimeType === 'text/html');
+      const part = textPart || htmlPart;
+      if (part?.body?.data) {
+        body = Buffer.from(part.body.data, 'base64url').toString('utf-8');
+      }
+    }
+
+    return {
+      id: msg.id || '',
+      from,
+      date,
+      subject,
+      snippet: msg.snippet || '',
+      body,
+      isSender: from.includes(senderEmail),
+    };
+  });
+}
+
 export async function sendQuoteEmail(
   toEmail: string,
   subject: string,

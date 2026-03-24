@@ -3,7 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { sendQuoteEmail } from "./gmail";
+import { sendQuoteEmail, getThreadReplies } from "./gmail";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -270,8 +270,38 @@ export async function registerRoutes(
     }
   });
 
-  app.post(api.communications.syncReplies.path, async (_req, res) => {
-    res.json({ newReplies: 0 });
+  app.post(api.communications.syncReplies.path, async (req, res) => {
+    const quoteId = Number(req.params.quoteId);
+    const threadId = await storage.getLatestThreadId(quoteId);
+    if (!threadId) return res.json({ newReplies: 0 });
+
+    try {
+      const replies = await getThreadReplies(threadId);
+      const existingComms = await storage.getCommunications(quoteId);
+      const existingIds = new Set(existingComms.map(c => c.gmailMessageId));
+
+      let newCount = 0;
+      for (const reply of replies) {
+        if (!existingIds.has(reply.id)) {
+          await storage.createCommunication({
+            quoteId,
+            direction: reply.isSender ? 'outbound' : 'inbound',
+            senderEmail: reply.from,
+            recipientEmail: '',
+            subject: reply.subject || '',
+            body: reply.snippet || reply.body,
+            gmailMessageId: reply.id,
+            gmailThreadId: threadId,
+          });
+          newCount++;
+        }
+      }
+
+      res.json({ newReplies: newCount });
+    } catch (err: any) {
+      console.error('Failed to sync replies:', err);
+      res.status(500).json({ message: 'Failed to sync replies. The Gmail connection may not have read permissions.' });
+    }
   });
 
   // SEED DATA
