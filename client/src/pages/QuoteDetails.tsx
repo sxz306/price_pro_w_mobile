@@ -433,7 +433,6 @@ export default function QuoteDetails() {
                                             data-testid={`bar-win-rate-${item.id}`}
                                           />
                                         </div>
-                                        <p className={`text-[10px] font-medium mt-1 ${winRateColor(winRate)}`}>{winRateLabel(winRate)}</p>
                                       </div>
                                     </div>
 
