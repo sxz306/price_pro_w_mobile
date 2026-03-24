@@ -425,15 +425,6 @@ export default function QuoteDetails() {
                                       <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
                                         {winRate.toFixed(2)}%
                                       </div>
-                                      <div className="mt-auto">
-                                        <div className="w-full bg-muted/60 rounded-full h-1 overflow-hidden">
-                                          <div
-                                            className={`h-full rounded-full transition-all duration-500 ease-out ${winRateBarColor(winRate)}`}
-                                            style={{ width: `${Math.min(winRate * 10, 100)}%` }}
-                                            data-testid={`bar-win-rate-${item.id}`}
-                                          />
-                                        </div>
-                                      </div>
                                     </div>
 
                                     <div className="p-4 flex flex-col min-h-[130px] border-x border-border/30">
