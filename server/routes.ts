@@ -273,7 +273,7 @@ export async function registerRoutes(
   app.post(api.communications.syncReplies.path, async (req, res) => {
     const quoteId = Number(req.params.quoteId);
     const threadId = await storage.getLatestThreadId(quoteId);
-    if (!threadId) return res.json({ newReplies: 0 });
+    if (!threadId) return res.json({ newReplies: 0, limited: true });
 
     try {
       const replies = await getThreadReplies(threadId);
@@ -297,10 +297,10 @@ export async function registerRoutes(
         }
       }
 
-      res.json({ newReplies: newCount });
+      res.json({ newReplies: newCount, limited: false });
     } catch (err: any) {
       console.error('Failed to sync replies:', err);
-      res.status(500).json({ message: 'Failed to sync replies. The Gmail connection may not have read permissions.' });
+      res.json({ newReplies: 0, limited: true });
     }
   });
 

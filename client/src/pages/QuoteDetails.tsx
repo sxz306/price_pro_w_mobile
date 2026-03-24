@@ -512,7 +512,9 @@ export default function QuoteDetails() {
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
                       onClick={() => syncReplies.mutate(undefined, {
                         onSuccess: (data: any) => {
-                          if (data.newReplies > 0) {
+                          if (data.limited) {
+                            toast({ title: "Reply syncing unavailable", description: "The Gmail connection only supports sending. Check your inbox directly for replies." });
+                          } else if (data.newReplies > 0) {
                             toast({ title: `${data.newReplies} new reply(ies) synced` });
                           } else {
                             toast({ title: "No new replies" });
