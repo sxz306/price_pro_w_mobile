@@ -369,10 +369,9 @@ export default function QuoteDetails() {
                           <span>🔒</span> Pricing is locked — revert to Draft to make changes.
                         </p>
                       )}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        {/* Slider */}
-                        <div className="space-y-4">
-                          <div className="space-y-3">
+                      <div className="space-y-5">
+                        <div className="flex items-start gap-5">
+                          <div className="flex-1 min-w-0 space-y-3">
                             <Slider
                               data-testid={`slider-price-${item.id}`}
                               min={70}
@@ -389,17 +388,16 @@ export default function QuoteDetails() {
                               <span className="font-medium tabular-nums">{Math.round(mult * 100)}%</span>
                               <span>{formatCurrency(baseLinePrice * 2.0)} <span className="opacity-60">(+100%)</span></span>
                             </div>
+                            {lineCost != null && (
+                              <div className="flex items-center justify-between text-sm pt-3 border-t border-border/30">
+                                <span className="text-muted-foreground">Gross profit (vs. cost)</span>
+                                <span className={`font-semibold ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                                  {formatCurrency(adjLinePrice - lineCost)}
+                                  {lineCost > 0 && <span className={`font-normal text-xs ml-1 ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>({(((adjLinePrice - lineCost) / lineCost) * 100).toFixed(1)}%)</span>}
+                                </span>
+                              </div>
+                            )}
                           </div>
-
-                          {lineCost != null && (
-                            <div className="flex items-center justify-between text-sm pt-3 border-t border-border/30">
-                              <span className="text-muted-foreground">Gross profit (vs. cost)</span>
-                              <span className={`font-semibold ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-                                {formatCurrency(adjLinePrice - lineCost)}
-                                {lineCost > 0 && <span className={`font-normal text-xs ml-1 ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>({(((adjLinePrice - lineCost) / lineCost) * 100).toFixed(1)}%)</span>}
-                              </span>
-                            </div>
-                          )}
 
                           {(() => {
                             const optMult = optimalMultiplier(quote?.customerId ?? 0, item.productId, item.quantity);
@@ -408,24 +406,20 @@ export default function QuoteDetails() {
                               ? ((optMult - 1) * 100) / (1 / (calcWinRate(optMult, quote?.customerId ?? 0, item.productId, item.quantity) / 100))
                               : null;
                             return (
-                              <div className="rounded-xl border border-primary/30 bg-primary/5 overflow-hidden shadow-sm p-4 mt-8">
-                                <div className="flex items-center gap-1.5 mb-2">
+                              <div className="w-48 flex-shrink-0 rounded-xl border border-primary/30 bg-primary/5 p-4 shadow-sm">
+                                <div className="flex items-center gap-1.5 mb-3">
                                   <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center">
                                     <Lightbulb className="w-3 h-3 text-primary" />
                                   </div>
-                                  <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Suggested Line Price</p>
+                                  <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">Suggested Price</p>
                                 </div>
-                                <div className="flex items-baseline gap-3">
-                                  <span className="text-[22px] font-display font-bold tabular-nums text-primary" data-testid={`text-suggested-price-${item.id}`}>
-                                    {formatCurrency(suggestedLinePrice)}
-                                  </span>
-                                  <span className="text-[11px] text-muted-foreground">
-                                    {Math.round(optMult * 100)}% of cost
-                                  </span>
-                                  <span className="text-[11px] text-primary/70 font-medium">
-                                    {optMarginPerDay != null ? `Best margin/day: ${optMarginPerDay.toFixed(2)}%` : "—"}
-                                  </span>
+                                <div className="text-xl font-display font-bold tabular-nums text-primary mb-1" data-testid={`text-suggested-price-${item.id}`}>
+                                  {formatCurrency(suggestedLinePrice)}
                                 </div>
+                                <p className="text-[10px] text-muted-foreground">{Math.round(optMult * 100)}% of cost</p>
+                                <p className="text-[10px] text-primary/70 font-medium mt-0.5">
+                                  {optMarginPerDay != null ? `Best margin/day: ${optMarginPerDay.toFixed(2)}%` : "—"}
+                                </p>
                               </div>
                             );
                           })()}
@@ -455,7 +449,7 @@ export default function QuoteDetails() {
                             return `${val >= 0 ? "+" : ""}${val.toFixed(2)}%`;
                           };
                           return (
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
                                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Win Probability</p>
                                 <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
