@@ -39,11 +39,25 @@ export const quoteItems = pgTable("quote_items", {
   priceMultiplier: numeric("price_multiplier").notNull().default('1'),
 });
 
+export const communications = pgTable("communications", {
+  id: serial("id").primaryKey(),
+  quoteId: integer("quote_id").notNull(),
+  direction: text("direction").notNull(), // 'outbound' or 'inbound'
+  senderEmail: text("sender_email").notNull(),
+  recipientEmail: text("recipient_email").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  gmailMessageId: text("gmail_message_id"),
+  gmailThreadId: text("gmail_thread_id"),
+  sentAt: timestamp("sent_at").defaultNow(),
+});
+
 // === BASE SCHEMAS ===
 export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertQuoteSchema = createInsertSchema(quotes).omit({ id: true, createdAt: true });
 export const insertQuoteItemSchema = createInsertSchema(quoteItems).omit({ id: true });
+export const insertCommunicationSchema = createInsertSchema(communications).omit({ id: true, sentAt: true });
 
 // === EXPLICIT API CONTRACT TYPES ===
 export type Customer = typeof customers.$inferSelect;
@@ -61,3 +75,6 @@ export type UpdateQuoteRequest = Partial<InsertQuote>;
 export type QuoteItem = typeof quoteItems.$inferSelect;
 export type InsertQuoteItem = z.infer<typeof insertQuoteItemSchema>;
 export type UpdateQuoteItemRequest = Partial<InsertQuoteItem>;
+
+export type Communication = typeof communications.$inferSelect;
+export type InsertCommunication = z.infer<typeof insertCommunicationSchema>;

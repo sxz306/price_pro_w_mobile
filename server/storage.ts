@@ -1,10 +1,11 @@
 import { db } from "./db";
 import {
-  customers, products, quotes, quoteItems,
+  customers, products, quotes, quoteItems, communications,
   type Customer, type InsertCustomer, type UpdateCustomerRequest,
   type Product, type InsertProduct, type UpdateProductRequest,
   type Quote, type InsertQuote, type UpdateQuoteRequest,
-  type QuoteItem, type InsertQuoteItem
+  type QuoteItem, type InsertQuoteItem,
+  type Communication, type InsertCommunication
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
@@ -37,6 +38,10 @@ export interface IStorage {
   updateQuoteItem(id: number, updates: { priceMultiplier: string }): Promise<QuoteItem | undefined>;
   deleteQuoteItem(id: number): Promise<void>;
   updateQuoteTotal(quoteId: number): Promise<void>;
+
+  getCommunications(quoteId: number): Promise<Communication[]>;
+  createCommunication(comm: InsertCommunication): Promise<Communication>;
+  getLatestThreadId(quoteId: number): Promise<string | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -118,6 +123,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteQuote(id: number): Promise<void> {
+    await db.delete(communications).where(eq(communications.quoteId, id));
     await db.delete(quoteItems).where(eq(quoteItems.quoteId, id));
     await db.delete(quotes).where(eq(quotes.id, id));
   }
@@ -162,6 +168,23 @@ export class DatabaseStorage implements IStorage {
     await db.update(quotes)
       .set({ totalAmount: total.toString() })
       .where(eq(quotes.id, quoteId));
+  }
+  async getCommunications(quoteId: number): Promise<Communication[]> {
+    return await db.select().from(communications).where(eq(communications.quoteId, quoteId)).orderBy(communications.sentAt);
+  }
+
+  async createCommunication(comm: InsertCommunication): Promise<Communication> {
+    const [newComm] = await db.insert(communications).values(comm).returning();
+    return newComm;
+  }
+
+  async getLatestThreadId(quoteId: number): Promise<string | null> {
+    const comms = await db.select({ gmailThreadId: communications.gmailThreadId })
+      .from(communications)
+      .where(eq(communications.quoteId, quoteId))
+      .orderBy(communications.sentAt);
+    const last = comms.filter(c => c.gmailThreadId).pop();
+    return last?.gmailThreadId || null;
   }
 }
 

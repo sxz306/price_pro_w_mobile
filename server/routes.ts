@@ -3,6 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { sendQuoteEmail, getThreadReplies, getSenderEmail } from "./gmail";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -184,6 +185,124 @@ export async function registerRoutes(
   app.delete(api.quoteItems.delete.path, async (req, res) => {
     await storage.deleteQuoteItem(Number(req.params.id));
     res.status(204).send();
+  });
+
+  // === COMMUNICATIONS ===
+  app.get(api.communications.list.path, async (req, res) => {
+    const comms = await storage.getCommunications(Number(req.params.quoteId));
+    res.json(comms);
+  });
+
+  app.post(api.communications.send.path, async (req, res) => {
+    const quoteId = Number(req.params.quoteId);
+    const quote = await storage.getQuote(quoteId);
+    if (!quote) return res.status(404).json({ message: 'Quote not found' });
+    if (!quote.customerEmail) return res.status(400).json({ message: 'Customer has no email address' });
+
+    const items = await storage.getQuoteItems(quoteId);
+    const products = await storage.getProducts();
+
+    const lineItemsHtml = items.map(item => {
+      const product = products.find(p => p.id === item.productId);
+      const mult = parseFloat(String(item.priceMultiplier || '1'));
+      const linePrice = item.quantity * parseFloat(item.unitPrice) * mult;
+      return `<tr>
+        <td style="padding:8px;border-bottom:1px solid #eee;">${product?.name || 'Product #' + item.productId}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">$${linePrice.toFixed(2)}</td>
+      </tr>`;
+    }).join('');
+
+    const totalPrice = items.reduce((sum, item) => {
+      const mult = parseFloat(String(item.priceMultiplier || '1'));
+      return sum + item.quantity * parseFloat(item.unitPrice) * mult;
+    }, 0);
+
+    const htmlBody = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <h2 style="color:#1a1a2e;">Quote #${quote.id} from Price Pro</h2>
+        <p>Dear ${quote.customerName},</p>
+        <p>Please find your quote details below:</p>
+        <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+          <thead>
+            <tr style="background:#f5f5f5;">
+              <th style="padding:8px;text-align:left;">Product</th>
+              <th style="padding:8px;text-align:center;">Qty</th>
+              <th style="padding:8px;text-align:right;">Price</th>
+            </tr>
+          </thead>
+          <tbody>${lineItemsHtml}</tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" style="padding:12px 8px;font-weight:bold;border-top:2px solid #333;">Total</td>
+              <td style="padding:12px 8px;font-weight:bold;text-align:right;border-top:2px solid #333;">$${totalPrice.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <p>If you have any questions, please reply to this email.</p>
+        <p style="color:#666;font-size:12px;margin-top:30px;">Sent from Price Pro</p>
+      </div>
+    `;
+
+    try {
+      const subject = `Quote #${quote.id} — ${quote.customerName}`;
+      const senderEmail = await getSenderEmail();
+      const result = await sendQuoteEmail(quote.customerEmail, subject, htmlBody);
+
+      await storage.createCommunication({
+        quoteId,
+        direction: 'outbound',
+        senderEmail,
+        recipientEmail: quote.customerEmail,
+        subject,
+        body: htmlBody,
+        gmailMessageId: result.messageId,
+        gmailThreadId: result.threadId,
+      });
+
+      if (quote.status === 'draft') {
+        await storage.updateQuote(quoteId, { status: 'sent' });
+      }
+
+      res.json({ message: 'Quote sent successfully' });
+    } catch (err: any) {
+      console.error('Failed to send email:', err);
+      res.status(500).json({ message: 'Failed to send email. Please check your Gmail connection.' });
+    }
+  });
+
+  app.post(api.communications.syncReplies.path, async (req, res) => {
+    const quoteId = Number(req.params.quoteId);
+    const threadId = await storage.getLatestThreadId(quoteId);
+    if (!threadId) return res.json({ newReplies: 0 });
+
+    try {
+      const replies = await getThreadReplies(threadId);
+      const existingComms = await storage.getCommunications(quoteId);
+      const existingIds = new Set(existingComms.map(c => c.gmailMessageId));
+
+      let newCount = 0;
+      for (const reply of replies) {
+        if (!existingIds.has(reply.id)) {
+          await storage.createCommunication({
+            quoteId,
+            direction: reply.isSender ? 'outbound' : 'inbound',
+            senderEmail: reply.from,
+            recipientEmail: '',
+            subject: reply.subject || '',
+            body: reply.snippet || reply.body,
+            gmailMessageId: reply.id,
+            gmailThreadId: threadId,
+          });
+          newCount++;
+        }
+      }
+
+      res.json({ newReplies: newCount });
+    } catch (err: any) {
+      console.error('Failed to sync replies:', err);
+      res.status(500).json({ message: 'Failed to sync replies. Please try again.' });
+    }
   });
 
   // SEED DATA

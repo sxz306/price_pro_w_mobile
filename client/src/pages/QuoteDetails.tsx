@@ -10,7 +10,9 @@ import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, CheckCircle, Send, XCircle, FileText, TrendingUp, DollarSign, Target } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle, Send, XCircle, FileText, TrendingUp, DollarSign, Target, Mail, RefreshCw, MessageSquare, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { useCommunications, useSendQuote, useSyncReplies } from "@/hooks/use-communications";
+import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,6 +68,11 @@ export default function QuoteDetails() {
   const createItem = useCreateQuoteItem(quoteId);
   const updateItem = useUpdateQuoteItem(quoteId);
   const deleteItem = useDeleteQuoteItem(quoteId);
+
+  const { data: comms, isLoading: isLoadingComms } = useCommunications(quoteId);
+  const sendQuote = useSendQuote(quoteId);
+  const syncReplies = useSyncReplies(quoteId);
+  const { toast } = useToast();
 
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
 
@@ -448,7 +455,22 @@ export default function QuoteDetails() {
               </div>
 
               <div className="mt-8 pt-6 border-t border-border/50 grid grid-cols-2 gap-2">
-                {quote.status === "draft" && (
+                {quote.status === "draft" && quote.customerEmail && (
+                  <Button
+                    data-testid="button-send-quote"
+                    onClick={() => {
+                      sendQuote.mutate(undefined, {
+                        onSuccess: () => toast({ title: "Quote sent!", description: `Email sent to ${quote.customerEmail}` }),
+                        onError: (err: any) => toast({ title: "Send failed", description: err.message || "Could not send email", variant: "destructive" }),
+                      });
+                    }}
+                    disabled={sendQuote.isPending}
+                    className="col-span-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Mail className="w-4 h-4 mr-2" /> {sendQuote.isPending ? "Sending..." : "Send Quote"}
+                  </Button>
+                )}
+                {quote.status === "draft" && !quote.customerEmail && (
                   <Button data-testid="button-mark-sent" onClick={() => handleStatusChange("sent")} className="col-span-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
                     <Send className="w-4 h-4 mr-2" /> Mark as Sent
                   </Button>
@@ -473,6 +495,87 @@ export default function QuoteDetails() {
                 )}
               </div>
             </div>
+
+            {/* Communication History */}
+            {quote.customerEmail && (
+              <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="font-display font-semibold text-lg">Communications</h3>
+                  </div>
+                  {comms && comms.length > 0 && (
+                    <Button
+                      data-testid="button-sync-replies"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => syncReplies.mutate(undefined, {
+                        onSuccess: (data: any) => {
+                          if (data.newReplies > 0) {
+                            toast({ title: `${data.newReplies} new reply(ies) synced` });
+                          } else {
+                            toast({ title: "No new replies" });
+                          }
+                        },
+                        onError: () => toast({ title: "Sync failed", variant: "destructive" }),
+                      })}
+                      disabled={syncReplies.isPending}
+                    >
+                      <RefreshCw className={`w-4 h-4 ${syncReplies.isPending ? 'animate-spin' : ''}`} />
+                    </Button>
+                  )}
+                </div>
+
+                {isLoadingComms ? (
+                  <p className="text-sm text-muted-foreground">Loading...</p>
+                ) : !comms || comms.length === 0 ? (
+                  <p className="text-sm text-muted-foreground" data-testid="text-no-communications">No emails sent yet.</p>
+                ) : (
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {comms.map((comm) => (
+                      <div key={comm.id} data-testid={`comm-${comm.id}`} className={`p-3 rounded-xl border text-sm ${comm.direction === 'outbound' ? 'border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-900/20' : 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-900/20'}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          {comm.direction === 'outbound' ? (
+                            <ArrowUpRight className="w-3 h-3 text-blue-500" />
+                          ) : (
+                            <ArrowDownLeft className="w-3 h-3 text-emerald-500" />
+                          )}
+                          <span className="font-medium text-xs">
+                            {comm.direction === 'outbound' ? 'Sent' : 'Reply'}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            {comm.sentAt ? new Date(comm.sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                          </span>
+                        </div>
+                        {comm.subject && <p className="font-medium text-xs truncate">{comm.subject}</p>}
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {comm.direction === 'outbound' ? `Sent to ${comm.recipientEmail}` : comm.body.replace(/<[^>]*>/g, '').substring(0, 120)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {quote.status !== 'draft' && quote.customerEmail && (
+                  <Button
+                    data-testid="button-resend-quote"
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-4 rounded-xl"
+                    onClick={() => {
+                      sendQuote.mutate(undefined, {
+                        onSuccess: () => toast({ title: "Quote re-sent!", description: `Email sent to ${quote.customerEmail}` }),
+                        onError: (err: any) => toast({ title: "Send failed", description: err.message, variant: "destructive" }),
+                      });
+                    }}
+                    disabled={sendQuote.isPending}
+                  >
+                    <Mail className="w-4 h-4 mr-2" /> {sendQuote.isPending ? "Sending..." : "Resend Quote"}
+                  </Button>
+                )}
+              </div>
+            )}
 
             {/* Summary */}
             <div className="bg-muted/30 border border-border/50 rounded-2xl p-6 shadow-sm">

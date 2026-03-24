@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertCustomerSchema, insertProductSchema, products, quotes, quoteItems, customers, insertQuoteSchema, insertQuoteItemSchema } from './schema';
+import { insertCustomerSchema, insertProductSchema, products, quotes, quoteItems, customers, communications, insertQuoteSchema, insertQuoteItemSchema } from './schema';
 
 export const errorSchemas = {
   validation: z.object({ message: z.string(), field: z.string().optional() }),
@@ -122,6 +122,23 @@ export const api = {
       method: 'DELETE' as const,
       path: '/api/quotes/:quoteId/items/:id' as const,
       responses: { 204: z.void(), 404: errorSchemas.notFound },
+    },
+  },
+  communications: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/quotes/:quoteId/communications' as const,
+      responses: { 200: z.array(z.custom<typeof communications.$inferSelect>()) },
+    },
+    send: {
+      method: 'POST' as const,
+      path: '/api/quotes/:quoteId/send' as const,
+      responses: { 200: z.object({ message: z.string() }), 400: errorSchemas.validation },
+    },
+    syncReplies: {
+      method: 'POST' as const,
+      path: '/api/quotes/:quoteId/sync-replies' as const,
+      responses: { 200: z.object({ newReplies: z.number() }) },
     },
   },
 };
