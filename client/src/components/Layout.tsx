@@ -118,7 +118,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground rounded-full">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-background"></span>
             </Button>
           </div>
         </header>
