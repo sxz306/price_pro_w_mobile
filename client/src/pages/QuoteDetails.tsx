@@ -40,11 +40,11 @@ function calcWinRate(multiplier: number, customerId: number, productId: number, 
 function optimalMultiplier(customerId: number, productId: number, quantity: number): number {
   let bestMult = 1.0;
   let bestVal = 0;
-  for (let m = 100; m <= 200; m++) {
-    const mult = m / 100;
+  for (let m = 10000; m <= 20000; m++) {
+    const mult = m / 10000;
     const marginPct = (mult - 1) * 100;
     const wr = calcWinRate(mult, customerId, productId, quantity);
-    const marginPerDay = marginPct / (1 / (wr / 100));
+    const marginPerDay = marginPct * (wr / 100);
     if (marginPerDay > bestVal) {
       bestVal = marginPerDay;
       bestMult = mult;
@@ -416,9 +416,9 @@ export default function QuoteDetails() {
                                 <div className="text-xl font-display font-bold tabular-nums text-primary mb-1" data-testid={`text-suggested-price-${item.id}`}>
                                   {formatCurrency(suggestedLinePrice)}
                                 </div>
-                                <p className="text-[10px] text-muted-foreground">{Math.round(optMult * 100)}% of cost</p>
+                                <p className="text-[10px] text-muted-foreground">{(optMult * 100).toFixed(2)}% of cost</p>
                                 <p className="text-[10px] text-primary/70 font-medium mt-0.5">
-                                  {optMarginPerDay != null ? `Best margin/day: ${optMarginPerDay.toFixed(2)}%` : "—"}
+                                  {optMarginPerDay != null ? `Best margin/day: ${optMarginPerDay.toFixed(4)}%` : "—"}
                                 </p>
                               </div>
                             );
@@ -444,9 +444,9 @@ export default function QuoteDetails() {
                             if (val < 0) return "bg-red-500/5";
                             return "bg-muted/30";
                           };
-                          const fmtPct = (val: number | null) => {
+                          const fmtPct = (val: number | null, decimals = 2) => {
                             if (val == null) return "—";
-                            return `${val >= 0 ? "+" : ""}${val.toFixed(2)}%`;
+                            return `${val >= 0 ? "+" : ""}${val.toFixed(decimals)}%`;
                           };
                           return (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -541,7 +541,7 @@ export default function QuoteDetails() {
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ Day</p>
                                       </div>
                                       <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${marginColor(marginPerDay)}`} data-testid={`text-margin-per-day-${item.id}`}>
-                                        {fmtPct(marginPerDay)}
+                                        {fmtPct(marginPerDay, 4)}
                                       </div>
                                       <div className="mt-auto">
                                         <p className="text-[10px] text-muted-foreground">
