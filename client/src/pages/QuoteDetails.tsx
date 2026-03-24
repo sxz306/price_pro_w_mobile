@@ -490,38 +490,38 @@ export default function QuoteDetails() {
                               </div>
 
                               <div>
+                              {(() => {
+                                  const optMult = optimalMultiplier(quote?.customerId ?? 0, item.productId, item.quantity);
+                                  const suggestedLinePrice = item.quantity * parseFloat(item.unitPrice) * optMult;
+                                  const optMarginPerDay = lineCost != null && lineCost > 0
+                                    ? ((optMult - 1) * 100) / (1 / (calcWinRate(optMult, quote?.customerId ?? 0, item.productId, item.quantity) / 100))
+                                    : null;
+                                  return (
+                                    <div className="rounded-xl border border-primary/30 bg-primary/5 overflow-hidden shadow-sm p-4 mb-3">
+                                      <div className="flex items-center gap-1.5 mb-2">
+                                        <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center">
+                                          <Lightbulb className="w-3 h-3 text-primary" />
+                                        </div>
+                                        <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Suggested Line Price</p>
+                                      </div>
+                                      <div className="flex items-baseline gap-3">
+                                        <span className="text-[22px] font-display font-bold tabular-nums text-primary" data-testid={`text-suggested-price-${item.id}`}>
+                                          {formatCurrency(suggestedLinePrice)}
+                                        </span>
+                                        <span className="text-[11px] text-muted-foreground">
+                                          {Math.round(optMult * 100)}% of cost
+                                        </span>
+                                        <span className="text-[11px] text-primary/70 font-medium">
+                                          {optMarginPerDay != null ? `Best margin/day: ${optMarginPerDay.toFixed(2)}%` : "—"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+
                                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Margin Analysis</p>
                                 <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
-                                  <div className="grid grid-cols-4">
-                                    {(() => {
-                                      const optMult = optimalMultiplier(quote?.customerId ?? 0, item.productId, item.quantity);
-                                      const suggestedLinePrice = item.quantity * parseFloat(item.unitPrice) * optMult;
-                                      const optMarginPerDay = lineCost != null && lineCost > 0
-                                        ? ((optMult - 1) * 100) / (1 / (calcWinRate(optMult, quote?.customerId ?? 0, item.productId, item.quantity) / 100))
-                                        : null;
-                                      return (
-                                        <div className="p-4 flex flex-col min-h-[130px] bg-primary/5 border-r border-border/30">
-                                          <div className="flex items-center gap-1.5 mb-1">
-                                            <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center">
-                                              <Lightbulb className="w-3 h-3 text-primary" />
-                                            </div>
-                                            <p className="text-[10px] text-primary uppercase tracking-wider font-medium">Suggested</p>
-                                          </div>
-                                          <div className="text-[22px] font-display font-bold tabular-nums mt-2 text-primary" data-testid={`text-suggested-price-${item.id}`}>
-                                            {formatCurrency(suggestedLinePrice)}
-                                          </div>
-                                          <div className="mt-auto">
-                                            <p className="text-[10px] text-muted-foreground">
-                                              {Math.round(optMult * 100)}% of cost
-                                            </p>
-                                            <p className="text-[10px] text-primary/70 font-medium">
-                                              {optMarginPerDay != null ? `Best margin/day: ${optMarginPerDay.toFixed(2)}%` : "—"}
-                                            </p>
-                                          </div>
-                                        </div>
-                                      );
-                                    })()}
-
+                                  <div className="grid grid-cols-3">
                                     <div className={`p-4 flex flex-col min-h-[130px] ${marginBg(marginPct)}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className={`w-5 h-5 rounded-md flex items-center justify-center ${marginPct != null && marginPct > 0 ? "bg-emerald-500/10" : marginPct != null && marginPct < 0 ? "bg-red-500/10" : "bg-muted"}`}>
