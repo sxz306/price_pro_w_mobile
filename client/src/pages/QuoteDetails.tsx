@@ -397,7 +397,7 @@ export default function QuoteDetails() {
                                   <div className="p-4 flex flex-col">
                                     <div className="flex items-center gap-1.5 mb-3">
                                       <Target className="w-3.5 h-3.5 text-muted-foreground" />
-                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Win Rate / Day</p>
+                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Win Rate<br />/ Day</p>
                                     </div>
                                     <div className={`text-2xl font-display font-bold tabular-nums ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
                                       {winRate.toFixed(2)}%
@@ -417,23 +417,23 @@ export default function QuoteDetails() {
                                   <div className="p-4 flex flex-col">
                                     <div className="flex items-center gap-1.5 mb-3">
                                       <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Time to Sell</p>
+                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Time<br />to Sell</p>
                                     </div>
                                     <div className="text-2xl font-display font-bold tabular-nums text-foreground" data-testid={`text-time-to-sell-${item.id}`}>
                                       {daysToSell < 1000 ? daysToSell.toFixed(1) : "999+"}
                                     </div>
                                     <div className="mt-auto pt-3">
-                                      <p className="text-[10px] text-muted-foreground font-medium">
-                                        {daysToSell < 7 ? "Less than a week" : daysToSell < 30 ? `~${Math.round(daysToSell / 7)} weeks` : daysToSell < 365 ? `~${Math.round(daysToSell / 30)} months` : "Over a year"}
+                                      <p className="text-[10px] text-muted-foreground font-medium">Expected Days</p>
+                                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                                        {daysToSell < 7 ? "Less than a week" : daysToSell < 30 ? `~${Math.round(daysToSell / 7)} Weeks` : daysToSell < 365 ? `~${Math.round(daysToSell / 30)} Months` : "Over a Year"}
                                       </p>
-                                      <p className="text-[10px] text-muted-foreground mt-0.5">expected days</p>
                                     </div>
                                   </div>
 
                                   <div className="p-4 flex flex-col">
                                     <div className="flex items-center gap-1.5 mb-3">
                                       <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Win Rate / 30 Days</p>
+                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Win Rate<br />/ 30 Days</p>
                                     </div>
                                     <div className={`text-2xl font-display font-bold tabular-nums ${winRateColor(win30)}`} data-testid={`text-win-rate-30d-${item.id}`}>
                                       {win30.toFixed(2)}%
