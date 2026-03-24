@@ -388,20 +388,50 @@ export default function QuoteDetails() {
 
                         {/* Win Rate */}
                         <div className="space-y-3">
-                          <div className="rounded-xl border border-border/50 p-4 bg-muted/20">
-                            <div className="flex items-center justify-between mb-3">
-                              <p className="text-xs text-muted-foreground uppercase tracking-wider">Est. Win Rate / Day</p>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="rounded-xl border border-border/50 p-4 bg-muted/20">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Est. Win Rate / Day</p>
+                              <div className={`text-2xl font-display font-bold tabular-nums mb-1 ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
+                                {winRate.toFixed(2)}%
+                              </div>
                               <span className={`text-xs font-semibold ${winRateColor(winRate)}`}>{winRateLabel(winRate)}</span>
+                              <div className="w-full bg-muted rounded-full h-2 overflow-hidden mt-2">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${winRateBarColor(winRate)}`}
+                                  style={{ width: `${Math.min(winRate * 10, 100)}%` }}
+                                  data-testid={`bar-win-rate-${item.id}`}
+                                />
+                              </div>
                             </div>
-                            <div className={`text-4xl font-display font-bold tabular-nums mb-2 ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
-                              {winRate.toFixed(2)}%
+
+                            <div className="rounded-xl border border-border/50 p-4 bg-muted/20">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Expected Time to Sell</p>
+                              <div className="text-2xl font-display font-bold tabular-nums mb-1 text-foreground" data-testid={`text-time-to-sell-${item.id}`}>
+                                {(1 / (winRate / 100)).toFixed(1)}
+                              </div>
+                              <span className="text-xs text-muted-foreground">days</span>
                             </div>
-                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-300 ${winRateBarColor(winRate)}`}
-                                style={{ width: `${winRate}%` }}
-                                data-testid={`bar-win-rate-${item.id}`}
-                              />
+
+                            <div className="rounded-xl border border-border/50 p-4 bg-muted/20">
+                              {(() => {
+                                const win30 = (1 - Math.pow(1 - winRate / 100, 30)) * 100;
+                                return (
+                                  <>
+                                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Est. Win Rate / 30 Days</p>
+                                    <div className={`text-2xl font-display font-bold tabular-nums mb-1 ${winRateColor(win30)}`} data-testid={`text-win-rate-30d-${item.id}`}>
+                                      {win30.toFixed(2)}%
+                                    </div>
+                                    <span className={`text-xs font-semibold ${winRateColor(win30)}`}>{winRateLabel(win30)}</span>
+                                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden mt-2">
+                                      <div
+                                        className={`h-full rounded-full transition-all duration-300 ${winRateBarColor(win30)}`}
+                                        style={{ width: `${Math.min(win30, 100)}%` }}
+                                        data-testid={`bar-win-rate-30d-${item.id}`}
+                                      />
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
 
