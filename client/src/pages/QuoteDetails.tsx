@@ -408,7 +408,7 @@ export default function QuoteDetails() {
                               ? ((optMult - 1) * 100) / (1 / (calcWinRate(optMult, quote?.customerId ?? 0, item.productId, item.quantity) / 100))
                               : null;
                             return (
-                              <div className="rounded-xl border border-primary/30 bg-primary/5 overflow-hidden shadow-sm p-4 mt-3">
+                              <div className="rounded-xl border border-primary/30 bg-primary/5 overflow-hidden shadow-sm p-4 mt-8">
                                 <div className="flex items-center gap-1.5 mb-2">
                                   <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center">
                                     <Lightbulb className="w-3 h-3 text-primary" />
