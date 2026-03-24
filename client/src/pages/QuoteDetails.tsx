@@ -389,10 +389,10 @@ export default function QuoteDetails() {
                         {/* Win Rate & Margin Analysis */}
                         {(() => {
                           const daysToSell = 1 / (winRate / 100);
-                          const win30 = (1 - Math.pow(1 - winRate / 100, 30)) * 100;
+                          const win45 = (1 - Math.pow(1 - winRate / 100, 45)) * 100;
                           const marginPct = lineCost != null && lineCost > 0 ? ((adjLinePrice - lineCost) / lineCost) * 100 : null;
                           const marginPerDay = marginPct != null ? marginPct / daysToSell : null;
-                          const margin30 = marginPct != null ? marginPct * (win30 / 100) : null;
+                          const margin45 = marginPct != null ? marginPct * (win45 / 100) : null;
                           const marginColor = (val: number | null) => {
                             if (val == null) return "text-muted-foreground";
                             if (val > 0) return "text-emerald-600 dark:text-emerald-400";
@@ -463,20 +463,20 @@ export default function QuoteDetails() {
                                         <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
                                           <Calendar className="w-3 h-3 text-primary" />
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ 30 Days</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ 45 Days</p>
                                       </div>
-                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${winRateColor(win30)}`} data-testid={`text-win-rate-30d-${item.id}`}>
-                                        {win30.toFixed(2)}%
+                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${winRateColor(win45)}`} data-testid={`text-win-rate-45d-${item.id}`}>
+                                        {win45.toFixed(2)}%
                                       </div>
                                       <div className="mt-auto">
                                         <div className="w-full bg-muted/60 rounded-full h-1 overflow-hidden">
                                           <div
-                                            className={`h-full rounded-full transition-all duration-500 ease-out ${winRateBarColor(win30)}`}
-                                            style={{ width: `${Math.min(win30, 100)}%` }}
-                                            data-testid={`bar-win-rate-30d-${item.id}`}
+                                            className={`h-full rounded-full transition-all duration-500 ease-out ${winRateBarColor(win45)}`}
+                                            style={{ width: `${Math.min(win45, 100)}%` }}
+                                            data-testid={`bar-win-rate-45d-${item.id}`}
                                           />
                                         </div>
-                                        <p className={`text-[10px] font-medium mt-1 ${winRateColor(win30)}`}>{winRateLabel(win30)}</p>
+                                        <p className={`text-[10px] font-medium mt-1 ${winRateColor(win45)}`}>{winRateLabel(win45)}</p>
                                       </div>
                                     </div>
                                   </div>
@@ -521,19 +521,19 @@ export default function QuoteDetails() {
                                       </div>
                                     </div>
 
-                                    <div className={`p-4 flex flex-col min-h-[130px] ${marginBg(margin30)}`}>
+                                    <div className={`p-4 flex flex-col min-h-[130px] ${marginBg(margin45)}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
-                                        <div className={`w-5 h-5 rounded-md flex items-center justify-center ${margin30 != null && margin30 > 0 ? "bg-emerald-500/10" : margin30 != null && margin30 < 0 ? "bg-red-500/10" : "bg-muted"}`}>
-                                          <Calendar className={`w-3 h-3 ${margin30 != null && margin30 > 0 ? "text-emerald-500" : margin30 != null && margin30 < 0 ? "text-red-500" : "text-muted-foreground"}`} />
+                                        <div className={`w-5 h-5 rounded-md flex items-center justify-center ${margin45 != null && margin45 > 0 ? "bg-emerald-500/10" : margin45 != null && margin45 < 0 ? "bg-red-500/10" : "bg-muted"}`}>
+                                          <Calendar className={`w-3 h-3 ${margin45 != null && margin45 > 0 ? "text-emerald-500" : margin45 != null && margin45 < 0 ? "text-red-500" : "text-muted-foreground"}`} />
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ 30 Days</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ 45 Days</p>
                                       </div>
-                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${marginColor(margin30)}`} data-testid={`text-margin-30d-${item.id}`}>
-                                        {fmtPct(margin30)}
+                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${marginColor(margin45)}`} data-testid={`text-margin-45d-${item.id}`}>
+                                        {fmtPct(margin45)}
                                       </div>
                                       <div className="mt-auto">
                                         <p className="text-[10px] text-muted-foreground">
-                                          {marginPct != null ? `${fmtPct(marginPct)} × ${win30.toFixed(2)}%` : "—"}
+                                          {marginPct != null ? `${fmtPct(marginPct)} × ${win45.toFixed(2)}%` : "—"}
                                         </p>
                                       </div>
                                     </div>
