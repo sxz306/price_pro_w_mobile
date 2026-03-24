@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, CheckCircle, Send, XCircle, FileText, TrendingUp, DollarSign, Target, Mail, RefreshCw, MessageSquare, ArrowUpRight, ArrowDownLeft, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle, Send, XCircle, FileText, TrendingUp, DollarSign, Target, Mail, RefreshCw, MessageSquare, ArrowUpRight, ArrowDownLeft, Clock, Calendar, Lightbulb } from "lucide-react";
 import { useCommunications, useSendQuote, useSyncReplies } from "@/hooks/use-communications";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
@@ -35,6 +35,22 @@ function calcWinRate(multiplier: number, customerId: number, productId: number, 
   const qtyPenalty = 1 / (1 + 0.002 * quantity);
   const rate = baseline * qtyPenalty * Math.exp(-2.5 * (multiplier - 1.0));
   return Math.max(0.01, Math.min(98, Math.round(rate * 100) / 100));
+}
+
+function optimalMultiplier(customerId: number, productId: number, quantity: number): number {
+  let bestMult = 1.0;
+  let bestVal = 0;
+  for (let m = 100; m <= 200; m++) {
+    const mult = m / 100;
+    const marginPct = (mult - 1) * 100;
+    const wr = calcWinRate(mult, customerId, productId, quantity);
+    const marginPerDay = marginPct / (1 / (wr / 100));
+    if (marginPerDay > bestVal) {
+      bestVal = marginPerDay;
+      bestMult = mult;
+    }
+  }
+  return bestMult;
 }
 
 function winRateColor(rate: number): string {
@@ -476,7 +492,36 @@ export default function QuoteDetails() {
                               <div>
                                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Margin Analysis</p>
                                 <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
-                                  <div className="grid grid-cols-3">
+                                  <div className="grid grid-cols-4">
+                                    {(() => {
+                                      const optMult = optimalMultiplier(quote?.customerId ?? 0, item.productId, item.quantity);
+                                      const suggestedLinePrice = item.quantity * parseFloat(item.unitPrice) * optMult;
+                                      const optMarginPerDay = lineCost != null && lineCost > 0
+                                        ? ((optMult - 1) * 100) / (1 / (calcWinRate(optMult, quote?.customerId ?? 0, item.productId, item.quantity) / 100))
+                                        : null;
+                                      return (
+                                        <div className="p-4 flex flex-col min-h-[130px] bg-primary/5 border-r border-border/30">
+                                          <div className="flex items-center gap-1.5 mb-1">
+                                            <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center">
+                                              <Lightbulb className="w-3 h-3 text-primary" />
+                                            </div>
+                                            <p className="text-[10px] text-primary uppercase tracking-wider font-medium">Suggested</p>
+                                          </div>
+                                          <div className="text-[22px] font-display font-bold tabular-nums mt-2 text-primary" data-testid={`text-suggested-price-${item.id}`}>
+                                            {formatCurrency(suggestedLinePrice)}
+                                          </div>
+                                          <div className="mt-auto">
+                                            <p className="text-[10px] text-muted-foreground">
+                                              {Math.round(optMult * 100)}% of cost
+                                            </p>
+                                            <p className="text-[10px] text-primary/70 font-medium">
+                                              {optMarginPerDay != null ? `Best margin/day: ${optMarginPerDay.toFixed(2)}%` : "—"}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
+
                                     <div className={`p-4 flex flex-col min-h-[130px] ${marginBg(marginPct)}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className={`w-5 h-5 rounded-md flex items-center justify-center ${marginPct != null && marginPct > 0 ? "bg-emerald-500/10" : marginPct != null && marginPct < 0 ? "bg-red-500/10" : "bg-muted"}`}>
@@ -494,7 +539,7 @@ export default function QuoteDetails() {
                                       </div>
                                     </div>
 
-                                    <div className={`p-4 flex flex-col min-h-[130px] border-x border-border/30 ${marginBg(marginPerDay)}`}>
+                                    <div className={`p-4 flex flex-col min-h-[130px] border-x border-border/30 ${marginBg(marginPerDay)}`} data-testid={`margin-per-day-cell-${item.id}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className={`w-5 h-5 rounded-md flex items-center justify-center ${marginPerDay != null && marginPerDay > 0 ? "bg-emerald-500/10" : marginPerDay != null && marginPerDay < 0 ? "bg-red-500/10" : "bg-muted"}`}>
                                           <TrendingUp className={`w-3 h-3 ${marginPerDay != null && marginPerDay > 0 ? "text-emerald-500" : marginPerDay != null && marginPerDay < 0 ? "text-red-500" : "text-muted-foreground"}`} />
