@@ -439,8 +439,9 @@ export default function QuoteDetails() {
                                     className="w-full mt-3 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
                                     data-testid={`btn-use-suggested-price-${item.id}`}
                                     onClick={() => {
-                                      setMult(item.id, optMult);
-                                      updateItem.mutate({ id: item.id, priceMultiplier: String(optMult) });
+                                      const rounded = Math.round(optMult * 100) / 100;
+                                      setMult(item.id, rounded);
+                                      updateItem.mutate({ id: item.id, priceMultiplier: String(rounded) });
                                     }}
                                   >
                                     Use this price
