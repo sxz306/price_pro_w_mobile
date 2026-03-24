@@ -378,9 +378,9 @@ export default function QuoteDetails() {
                           {lineCost != null && (
                             <div className="flex items-center justify-between text-sm pt-3 border-t border-border/30">
                               <span className="text-muted-foreground">Gross profit (vs. cost)</span>
-                              <span className={`font-semibold ${adjLinePrice > lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                              <span className={`font-semibold ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                                 {formatCurrency(adjLinePrice - lineCost)}
-                                {lineCost > 0 && <span className="font-normal text-xs ml-1">({(((adjLinePrice - lineCost) / lineCost) * 100).toFixed(1)}%)</span>}
+                                {lineCost > 0 && <span className={`font-normal text-xs ml-1 ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>({(((adjLinePrice - lineCost) / lineCost) * 100).toFixed(1)}%)</span>}
                               </span>
                             </div>
                           )}
