@@ -30,9 +30,10 @@ function baselineWinRate(customerId: number, productId: number): number {
   return (hash % 4) + 2;
 }
 
-function calcWinRate(multiplier: number, customerId: number, productId: number): number {
+function calcWinRate(multiplier: number, customerId: number, productId: number, quantity: number): number {
   const baseline = baselineWinRate(customerId, productId);
-  const rate = baseline * Math.exp(-2.5 * (multiplier - 1.0));
+  const qtyPenalty = 1 / (1 + 0.002 * quantity);
+  const rate = baseline * qtyPenalty * Math.exp(-2.5 * (multiplier - 1.0));
   return Math.max(0.01, Math.min(98, Math.round(rate * 100) / 100));
 }
 
@@ -323,7 +324,7 @@ export default function QuoteDetails() {
                   const adjLinePrice = baseLinePrice * mult;
                   const unitCost = product?.cost ? parseFloat(product.cost) : null;
                   const lineCost = unitCost != null ? item.quantity * unitCost : null;
-                  const winRate = calcWinRate(mult, quote?.customerId ?? 0, item.productId);
+                  const winRate = calcWinRate(mult, quote?.customerId ?? 0, item.productId, item.quantity);
                   const expectedRevenue = (winRate / 100) * adjLinePrice;
 
                   return (
