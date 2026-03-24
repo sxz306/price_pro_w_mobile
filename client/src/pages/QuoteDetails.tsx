@@ -369,9 +369,9 @@ export default function QuoteDetails() {
                           <span>🔒</span> Pricing is locked — revert to Draft to make changes.
                         </p>
                       )}
-                      <div className="space-y-5">
-                        <div className="flex items-start gap-5">
-                          <div className="flex-1 min-w-0 space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6">
+                        <div className="space-y-4">
+                          <div className="space-y-3">
                             <Slider
                               data-testid={`slider-price-${item.id}`}
                               min={70}
@@ -388,38 +388,50 @@ export default function QuoteDetails() {
                               <span className="font-medium tabular-nums">{Math.round(mult * 100)}%</span>
                               <span>{formatCurrency(baseLinePrice * 2.0)} <span className="opacity-60">(+100%)</span></span>
                             </div>
-                            {lineCost != null && (
-                              <div className="flex items-center justify-between text-sm pt-3 border-t border-border/30">
-                                <span className="text-muted-foreground">Gross profit (vs. cost)</span>
-                                <span className={`font-semibold ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-                                  {formatCurrency(adjLinePrice - lineCost)}
-                                  {lineCost > 0 && <span className={`font-normal text-xs ml-1 ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>({(((adjLinePrice - lineCost) / lineCost) * 100).toFixed(1)}%)</span>}
-                                </span>
-                              </div>
-                            )}
                           </div>
+
+                          {lineCost != null && (
+                            <div className="flex items-center justify-between text-sm py-3 border-y border-border/30">
+                              <span className="text-muted-foreground">Gross profit</span>
+                              <span className={`font-semibold ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                                {formatCurrency(adjLinePrice - lineCost)}
+                                {lineCost > 0 && <span className={`font-normal text-xs ml-1 ${adjLinePrice >= lineCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>({(((adjLinePrice - lineCost) / lineCost) * 100).toFixed(1)}%)</span>}
+                              </span>
+                            </div>
+                          )}
 
                           {(() => {
                             const optMult = optimalMultiplier(quote?.customerId ?? 0, item.productId, item.quantity);
                             const suggestedLinePrice = item.quantity * parseFloat(item.unitPrice) * optMult;
+                            const optWinRate = calcWinRate(optMult, quote?.customerId ?? 0, item.productId, item.quantity);
                             const optMarginPerDay = lineCost != null && lineCost > 0
-                              ? ((optMult - 1) * 100) / (1 / (calcWinRate(optMult, quote?.customerId ?? 0, item.productId, item.quantity) / 100))
+                              ? ((optMult - 1) * 100) * (optWinRate / 100)
                               : null;
                             return (
-                              <div className="w-48 flex-shrink-0 rounded-xl border border-primary/30 bg-primary/5 p-4 shadow-sm">
-                                <div className="flex items-center gap-1.5 mb-3">
-                                  <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center">
-                                    <Lightbulb className="w-3 h-3 text-primary" />
+                              <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center">
+                                      <Lightbulb className="w-3.5 h-3.5 text-primary" />
+                                    </div>
+                                    <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">Suggested Price</p>
                                   </div>
-                                  <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">Suggested Price</p>
                                 </div>
-                                <div className="text-xl font-display font-bold tabular-nums text-primary mb-1" data-testid={`text-suggested-price-${item.id}`}>
+                                <div className="text-2xl font-display font-bold tabular-nums text-primary" data-testid={`text-suggested-price-${item.id}`}>
                                   {formatCurrency(suggestedLinePrice)}
                                 </div>
-                                <p className="text-[10px] text-muted-foreground">{(optMult * 100).toFixed(2)}% of cost</p>
-                                <p className="text-[10px] text-primary/70 font-medium mt-0.5">
-                                  {optMarginPerDay != null ? `Best margin/day: ${optMarginPerDay.toFixed(4)}%` : "—"}
-                                </p>
+                                <div className="mt-3 pt-3 border-t border-primary/15 grid grid-cols-2 gap-2">
+                                  <div>
+                                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Markup</p>
+                                    <p className="text-sm font-semibold text-primary tabular-nums">{(optMult * 100).toFixed(2)}%</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Best Margin/Day</p>
+                                    <p className="text-sm font-semibold text-primary tabular-nums">
+                                      {optMarginPerDay != null ? `${optMarginPerDay.toFixed(4)}%` : "—"}
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
                             );
                           })()}
@@ -430,7 +442,7 @@ export default function QuoteDetails() {
                           const daysToSell = 1 / (winRate / 100);
                           const win45 = (1 - Math.pow(1 - winRate / 100, 45)) * 100;
                           const marginPct = lineCost != null && lineCost > 0 ? ((adjLinePrice - lineCost) / lineCost) * 100 : null;
-                          const marginPerDay = marginPct != null ? marginPct / daysToSell : null;
+                          const marginPerDay = marginPct != null ? marginPct * (winRate / 100) : null;
                           const margin45 = marginPct != null ? marginPct * (win45 / 100) : null;
                           const marginColor = (val: number | null) => {
                             if (val == null) return "text-muted-foreground";
@@ -449,52 +461,51 @@ export default function QuoteDetails() {
                             return `${val >= 0 ? "+" : ""}${val.toFixed(decimals)}%`;
                           };
                           return (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-4">
                               <div>
                                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Win Probability</p>
                                 <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
                                   <div className="grid grid-cols-3">
-                                    <div className="p-4 flex flex-col min-h-[130px]">
+                                    <div className="p-3 flex flex-col min-h-[110px]">
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
                                           <Target className="w-3 h-3 text-primary" />
                                         </div>
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ Day</p>
                                       </div>
-                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
+                                      <div className={`text-lg font-display font-bold tabular-nums mt-1.5 ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
                                         {winRate.toFixed(2)}%
                                       </div>
                                     </div>
 
-                                    <div className="p-4 flex flex-col min-h-[130px] border-x border-border/30">
+                                    <div className="p-3 flex flex-col min-h-[110px] border-x border-border/30">
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
                                           <Clock className="w-3 h-3 text-primary" />
                                         </div>
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Time to Sell</p>
                                       </div>
-                                      <div className="flex items-baseline gap-1.5 mt-2">
-                                        <span className="text-[22px] font-display font-bold tabular-nums text-foreground" data-testid={`text-time-to-sell-${item.id}`}>
+                                      <div className="flex items-baseline gap-1 mt-1.5">
+                                        <span className="text-lg font-display font-bold tabular-nums text-foreground" data-testid={`text-time-to-sell-${item.id}`}>
                                           {daysToSell < 1000 ? daysToSell.toFixed(1) : "999+"}
                                         </span>
-                                        <span className="text-xs text-muted-foreground font-medium">days</span>
+                                        <span className="text-[10px] text-muted-foreground font-medium">days</span>
                                       </div>
                                       <div className="mt-auto">
-                                        <p className="text-[10px] text-muted-foreground">Expected Days</p>
                                         <p className="text-[10px] text-muted-foreground/70">
-                                          {daysToSell < 7 ? "Less than a week" : daysToSell < 30 ? `~${Math.round(daysToSell / 7)} Weeks` : daysToSell < 365 ? `~${Math.round(daysToSell / 30)} Months` : "Over a Year"}
+                                          {daysToSell < 7 ? "Less than a week" : daysToSell < 30 ? `~${Math.round(daysToSell / 7)} weeks` : daysToSell < 365 ? `~${Math.round(daysToSell / 30)} months` : "Over a year"}
                                         </p>
                                       </div>
                                     </div>
 
-                                    <div className="p-4 flex flex-col min-h-[130px]">
+                                    <div className="p-3 flex flex-col min-h-[110px]">
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
                                           <Calendar className="w-3 h-3 text-primary" />
                                         </div>
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ 45 Days</p>
                                       </div>
-                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${winRateColor(win45)}`} data-testid={`text-win-rate-45d-${item.id}`}>
+                                      <div className={`text-lg font-display font-bold tabular-nums mt-1.5 ${winRateColor(win45)}`} data-testid={`text-win-rate-45d-${item.id}`}>
                                         {win45.toFixed(2)}%
                                       </div>
                                       <div className="mt-auto">
@@ -516,14 +527,14 @@ export default function QuoteDetails() {
                                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Margin Analysis</p>
                                 <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
                                   <div className="grid grid-cols-3">
-                                    <div className={`p-4 flex flex-col min-h-[130px] ${marginBg(marginPct)}`}>
+                                    <div className={`p-3 flex flex-col min-h-[110px] ${marginBg(marginPct)}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className={`w-5 h-5 rounded-md flex items-center justify-center ${marginPct != null && marginPct > 0 ? "bg-emerald-500/10" : marginPct != null && marginPct < 0 ? "bg-red-500/10" : "bg-muted"}`}>
                                           <DollarSign className={`w-3 h-3 ${marginPct != null && marginPct > 0 ? "text-emerald-500" : marginPct != null && marginPct < 0 ? "text-red-500" : "text-muted-foreground"}`} />
                                         </div>
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Current</p>
                                       </div>
-                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${marginColor(marginPct)}`} data-testid={`text-margin-${item.id}`}>
+                                      <div className={`text-lg font-display font-bold tabular-nums mt-1.5 ${marginColor(marginPct)}`} data-testid={`text-margin-${item.id}`}>
                                         {fmtPct(marginPct)}
                                       </div>
                                       <div className="mt-auto">
@@ -533,31 +544,31 @@ export default function QuoteDetails() {
                                       </div>
                                     </div>
 
-                                    <div className={`p-4 flex flex-col min-h-[130px] border-x border-border/30 ${marginBg(marginPerDay)}`} data-testid={`margin-per-day-cell-${item.id}`}>
+                                    <div className={`p-3 flex flex-col min-h-[110px] border-x border-border/30 ${marginBg(marginPerDay)}`} data-testid={`margin-per-day-cell-${item.id}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className={`w-5 h-5 rounded-md flex items-center justify-center ${marginPerDay != null && marginPerDay > 0 ? "bg-emerald-500/10" : marginPerDay != null && marginPerDay < 0 ? "bg-red-500/10" : "bg-muted"}`}>
                                           <TrendingUp className={`w-3 h-3 ${marginPerDay != null && marginPerDay > 0 ? "text-emerald-500" : marginPerDay != null && marginPerDay < 0 ? "text-red-500" : "text-muted-foreground"}`} />
                                         </div>
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ Day</p>
                                       </div>
-                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${marginColor(marginPerDay)}`} data-testid={`text-margin-per-day-${item.id}`}>
+                                      <div className={`text-lg font-display font-bold tabular-nums mt-1.5 ${marginColor(marginPerDay)}`} data-testid={`text-margin-per-day-${item.id}`}>
                                         {fmtPct(marginPerDay, 4)}
                                       </div>
                                       <div className="mt-auto">
                                         <p className="text-[10px] text-muted-foreground">
-                                          {marginPct != null ? `${fmtPct(marginPct)} ÷ ${daysToSell.toFixed(1)}d` : "—"}
+                                          {marginPct != null ? `${fmtPct(marginPct)} × ${winRate.toFixed(2)}%` : "—"}
                                         </p>
                                       </div>
                                     </div>
 
-                                    <div className={`p-4 flex flex-col min-h-[130px] ${marginBg(margin45)}`}>
+                                    <div className={`p-3 flex flex-col min-h-[110px] ${marginBg(margin45)}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className={`w-5 h-5 rounded-md flex items-center justify-center ${margin45 != null && margin45 > 0 ? "bg-emerald-500/10" : margin45 != null && margin45 < 0 ? "bg-red-500/10" : "bg-muted"}`}>
                                           <Calendar className={`w-3 h-3 ${margin45 != null && margin45 > 0 ? "text-emerald-500" : margin45 != null && margin45 < 0 ? "text-red-500" : "text-muted-foreground"}`} />
                                         </div>
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ 45 Days</p>
                                       </div>
-                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${marginColor(margin45)}`} data-testid={`text-margin-45d-${item.id}`}>
+                                      <div className={`text-lg font-display font-bold tabular-nums mt-1.5 ${marginColor(margin45)}`} data-testid={`text-margin-45d-${item.id}`}>
                                         {fmtPct(margin45)}
                                       </div>
                                       <div className="mt-auto">
