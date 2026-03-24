@@ -386,137 +386,158 @@ export default function QuoteDetails() {
                           )}
                         </div>
 
-                        {/* Win Rate */}
+                        {/* Win Rate & Margin Analysis */}
                         {(() => {
                           const daysToSell = 1 / (winRate / 100);
                           const win30 = (1 - Math.pow(1 - winRate / 100, 30)) * 100;
+                          const marginPct = lineCost != null && lineCost > 0 ? ((adjLinePrice - lineCost) / lineCost) * 100 : null;
+                          const marginPerDay = marginPct != null ? marginPct / daysToSell : null;
+                          const margin30 = marginPct != null ? marginPct * (win30 / 100) : null;
+                          const marginColor = (val: number | null) => {
+                            if (val == null) return "text-muted-foreground";
+                            if (val > 0) return "text-emerald-600 dark:text-emerald-400";
+                            if (val < 0) return "text-red-600 dark:text-red-400";
+                            return "text-muted-foreground";
+                          };
+                          const marginBg = (val: number | null) => {
+                            if (val == null) return "bg-muted/30";
+                            if (val > 0) return "bg-emerald-500/5";
+                            if (val < 0) return "bg-red-500/5";
+                            return "bg-muted/30";
+                          };
+                          const fmtPct = (val: number | null) => {
+                            if (val == null) return "—";
+                            return `${val >= 0 ? "+" : ""}${val.toFixed(2)}%`;
+                          };
                           return (
-                            <div className="space-y-3">
-                              <div className="rounded-xl border border-border/50 bg-muted/20 overflow-hidden">
-                                <div className="grid grid-cols-3 divide-x divide-border/50">
-                                  <div className="p-4 flex flex-col">
-                                    <div className="flex items-center gap-1.5 mb-3">
-                                      <Target className="w-3.5 h-3.5 text-muted-foreground" />
-                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Win Rate<br />/ Day</p>
-                                    </div>
-                                    <div className={`text-2xl font-display font-bold tabular-nums ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
-                                      {winRate.toFixed(2)}%
-                                    </div>
-                                    <div className="mt-auto pt-3">
-                                      <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                                        <div
-                                          className={`h-full rounded-full transition-all duration-300 ${winRateBarColor(winRate)}`}
-                                          style={{ width: `${Math.min(winRate * 10, 100)}%` }}
-                                          data-testid={`bar-win-rate-${item.id}`}
-                                        />
+                            <div className="space-y-4">
+                              <div>
+                                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Win Probability</p>
+                                <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
+                                  <div className="grid grid-cols-3">
+                                    <div className="p-4 flex flex-col min-h-[130px]">
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                        <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
+                                          <Target className="w-3 h-3 text-primary" />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ Day</p>
                                       </div>
-                                      <p className={`text-[10px] font-medium mt-1.5 ${winRateColor(winRate)}`}>{winRateLabel(winRate)}</p>
-                                    </div>
-                                  </div>
-
-                                  <div className="p-4 flex flex-col">
-                                    <div className="flex items-center gap-1.5 mb-3">
-                                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Time<br />to Sell</p>
-                                    </div>
-                                    <div className="text-2xl font-display font-bold tabular-nums text-foreground" data-testid={`text-time-to-sell-${item.id}`}>
-                                      {daysToSell < 1000 ? daysToSell.toFixed(1) : "999+"}
-                                    </div>
-                                    <div className="mt-auto pt-3">
-                                      <p className="text-[10px] text-muted-foreground font-medium">Expected Days</p>
-                                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                                        {daysToSell < 7 ? "Less than a week" : daysToSell < 30 ? `~${Math.round(daysToSell / 7)} Weeks` : daysToSell < 365 ? `~${Math.round(daysToSell / 30)} Months` : "Over a Year"}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  <div className="p-4 flex flex-col">
-                                    <div className="flex items-center gap-1.5 mb-3">
-                                      <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Win Rate<br />/ 30 Days</p>
-                                    </div>
-                                    <div className={`text-2xl font-display font-bold tabular-nums ${winRateColor(win30)}`} data-testid={`text-win-rate-30d-${item.id}`}>
-                                      {win30.toFixed(2)}%
-                                    </div>
-                                    <div className="mt-auto pt-3">
-                                      <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                                        <div
-                                          className={`h-full rounded-full transition-all duration-300 ${winRateBarColor(win30)}`}
-                                          style={{ width: `${Math.min(win30, 100)}%` }}
-                                          data-testid={`bar-win-rate-30d-${item.id}`}
-                                        />
+                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
+                                        {winRate.toFixed(2)}%
                                       </div>
-                                      <p className={`text-[10px] font-medium mt-1.5 ${winRateColor(win30)}`}>{winRateLabel(win30)}</p>
+                                      <div className="mt-auto">
+                                        <div className="w-full bg-muted/60 rounded-full h-1 overflow-hidden">
+                                          <div
+                                            className={`h-full rounded-full transition-all duration-500 ease-out ${winRateBarColor(winRate)}`}
+                                            style={{ width: `${Math.min(winRate * 10, 100)}%` }}
+                                            data-testid={`bar-win-rate-${item.id}`}
+                                          />
+                                        </div>
+                                        <p className={`text-[10px] font-medium mt-1 ${winRateColor(winRate)}`}>{winRateLabel(winRate)}</p>
+                                      </div>
+                                    </div>
+
+                                    <div className="p-4 flex flex-col min-h-[130px] border-x border-border/30">
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                        <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
+                                          <Clock className="w-3 h-3 text-primary" />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Time to Sell</p>
+                                      </div>
+                                      <div className="flex items-baseline gap-1.5 mt-2">
+                                        <span className="text-[22px] font-display font-bold tabular-nums text-foreground" data-testid={`text-time-to-sell-${item.id}`}>
+                                          {daysToSell < 1000 ? daysToSell.toFixed(1) : "999+"}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground font-medium">days</span>
+                                      </div>
+                                      <div className="mt-auto">
+                                        <p className="text-[10px] text-muted-foreground">Expected Days</p>
+                                        <p className="text-[10px] text-muted-foreground/70">
+                                          {daysToSell < 7 ? "Less than a week" : daysToSell < 30 ? `~${Math.round(daysToSell / 7)} Weeks` : daysToSell < 365 ? `~${Math.round(daysToSell / 30)} Months` : "Over a Year"}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="p-4 flex flex-col min-h-[130px]">
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                        <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
+                                          <Calendar className="w-3 h-3 text-primary" />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ 30 Days</p>
+                                      </div>
+                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${winRateColor(win30)}`} data-testid={`text-win-rate-30d-${item.id}`}>
+                                        {win30.toFixed(2)}%
+                                      </div>
+                                      <div className="mt-auto">
+                                        <div className="w-full bg-muted/60 rounded-full h-1 overflow-hidden">
+                                          <div
+                                            className={`h-full rounded-full transition-all duration-500 ease-out ${winRateBarColor(win30)}`}
+                                            style={{ width: `${Math.min(win30, 100)}%` }}
+                                            data-testid={`bar-win-rate-30d-${item.id}`}
+                                          />
+                                        </div>
+                                        <p className={`text-[10px] font-medium mt-1 ${winRateColor(win30)}`}>{winRateLabel(win30)}</p>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               </div>
 
-                              <div className="rounded-xl border border-border/50 bg-muted/20 overflow-hidden">
-                                <div className="grid grid-cols-3 divide-x divide-border/50">
-                                  {(() => {
-                                    const marginPct = lineCost != null && lineCost > 0 ? ((adjLinePrice - lineCost) / lineCost) * 100 : null;
-                                    const marginPerDay = marginPct != null ? marginPct / daysToSell : null;
-                                    const margin30 = marginPct != null ? marginPct * (win30 / 100) : null;
-                                    const marginColor = (val: number | null) => {
-                                      if (val == null) return "text-muted-foreground";
-                                      if (val > 0) return "text-emerald-600 dark:text-emerald-400";
-                                      if (val < 0) return "text-red-600 dark:text-red-400";
-                                      return "text-muted-foreground";
-                                    };
-                                    const fmtPct = (val: number | null) => {
-                                      if (val == null) return "—";
-                                      return `${val >= 0 ? "+" : ""}${val.toFixed(2)}%`;
-                                    };
-                                    return (
-                                      <>
-                                        <div className="p-4 flex flex-col">
-                                          <div className="flex items-center gap-1.5 mb-3">
-                                            <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
-                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Margin at<br />Current Price</p>
-                                          </div>
-                                          <div className={`text-2xl font-display font-bold tabular-nums ${marginColor(marginPct)}`} data-testid={`text-margin-${item.id}`}>
-                                            {fmtPct(marginPct)}
-                                          </div>
-                                          <div className="mt-auto pt-3">
-                                            <p className="text-[10px] text-muted-foreground font-medium">
-                                              {lineCost != null ? `(${formatCurrency(adjLinePrice)} − ${formatCurrency(lineCost)}) / ${formatCurrency(lineCost)}` : "—"}
-                                            </p>
-                                          </div>
+                              <div>
+                                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Margin Analysis</p>
+                                <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
+                                  <div className="grid grid-cols-3">
+                                    <div className={`p-4 flex flex-col min-h-[130px] ${marginBg(marginPct)}`}>
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                        <div className={`w-5 h-5 rounded-md flex items-center justify-center ${marginPct != null && marginPct > 0 ? "bg-emerald-500/10" : marginPct != null && marginPct < 0 ? "bg-red-500/10" : "bg-muted"}`}>
+                                          <DollarSign className={`w-3 h-3 ${marginPct != null && marginPct > 0 ? "text-emerald-500" : marginPct != null && marginPct < 0 ? "text-red-500" : "text-muted-foreground"}`} />
                                         </div>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Current</p>
+                                      </div>
+                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${marginColor(marginPct)}`} data-testid={`text-margin-${item.id}`}>
+                                        {fmtPct(marginPct)}
+                                      </div>
+                                      <div className="mt-auto">
+                                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                          {lineCost != null ? <><span className="opacity-70">(</span>{formatCurrency(adjLinePrice)} − {formatCurrency(lineCost)}<span className="opacity-70">)</span> / {formatCurrency(lineCost)}</> : "—"}
+                                        </p>
+                                      </div>
+                                    </div>
 
-                                        <div className="p-4 flex flex-col">
-                                          <div className="flex items-center gap-1.5 mb-3">
-                                            <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
-                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Margin<br />/ Day</p>
-                                          </div>
-                                          <div className={`text-2xl font-display font-bold tabular-nums ${marginColor(marginPerDay)}`} data-testid={`text-margin-per-day-${item.id}`}>
-                                            {fmtPct(marginPerDay)}
-                                          </div>
-                                          <div className="mt-auto pt-3">
-                                            <p className="text-[10px] text-muted-foreground font-medium">
-                                              {marginPct != null ? `${fmtPct(marginPct)} ÷ ${daysToSell.toFixed(1)}d` : "—"}
-                                            </p>
-                                          </div>
+                                    <div className={`p-4 flex flex-col min-h-[130px] border-x border-border/30 ${marginBg(marginPerDay)}`}>
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                        <div className={`w-5 h-5 rounded-md flex items-center justify-center ${marginPerDay != null && marginPerDay > 0 ? "bg-emerald-500/10" : marginPerDay != null && marginPerDay < 0 ? "bg-red-500/10" : "bg-muted"}`}>
+                                          <TrendingUp className={`w-3 h-3 ${marginPerDay != null && marginPerDay > 0 ? "text-emerald-500" : marginPerDay != null && marginPerDay < 0 ? "text-red-500" : "text-muted-foreground"}`} />
                                         </div>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ Day</p>
+                                      </div>
+                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${marginColor(marginPerDay)}`} data-testid={`text-margin-per-day-${item.id}`}>
+                                        {fmtPct(marginPerDay)}
+                                      </div>
+                                      <div className="mt-auto">
+                                        <p className="text-[10px] text-muted-foreground">
+                                          {marginPct != null ? `${fmtPct(marginPct)} ÷ ${daysToSell.toFixed(1)}d` : "—"}
+                                        </p>
+                                      </div>
+                                    </div>
 
-                                        <div className="p-4 flex flex-col">
-                                          <div className="flex items-center gap-1.5 mb-3">
-                                            <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-tight">Margin<br />/ 30 Days</p>
-                                          </div>
-                                          <div className={`text-2xl font-display font-bold tabular-nums ${marginColor(margin30)}`} data-testid={`text-margin-30d-${item.id}`}>
-                                            {fmtPct(margin30)}
-                                          </div>
-                                          <div className="mt-auto pt-3">
-                                            <p className="text-[10px] text-muted-foreground font-medium">
-                                              {marginPct != null ? `${fmtPct(marginPct)} × ${win30.toFixed(2)}%` : "—"}
-                                            </p>
-                                          </div>
+                                    <div className={`p-4 flex flex-col min-h-[130px] ${marginBg(margin30)}`}>
+                                      <div className="flex items-center gap-1.5 mb-1">
+                                        <div className={`w-5 h-5 rounded-md flex items-center justify-center ${margin30 != null && margin30 > 0 ? "bg-emerald-500/10" : margin30 != null && margin30 < 0 ? "bg-red-500/10" : "bg-muted"}`}>
+                                          <Calendar className={`w-3 h-3 ${margin30 != null && margin30 > 0 ? "text-emerald-500" : margin30 != null && margin30 < 0 ? "text-red-500" : "text-muted-foreground"}`} />
                                         </div>
-                                      </>
-                                    );
-                                  })()}
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">/ 30 Days</p>
+                                      </div>
+                                      <div className={`text-[22px] font-display font-bold tabular-nums mt-2 ${marginColor(margin30)}`} data-testid={`text-margin-30d-${item.id}`}>
+                                        {fmtPct(margin30)}
+                                      </div>
+                                      <div className="mt-auto">
+                                        <p className="text-[10px] text-muted-foreground">
+                                          {marginPct != null ? `${fmtPct(marginPct)} × ${win30.toFixed(2)}%` : "—"}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
