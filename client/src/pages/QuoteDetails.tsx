@@ -713,10 +713,18 @@ export default function QuoteDetails() {
                   <span className="font-medium">{formatCurrency(quotedPrice)}</span>
                 </div>
                 {totalCost != null && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total cost</span>
-                    <span className="font-medium">{formatCurrency(totalCost)}</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total cost</span>
+                      <span className="font-medium">{formatCurrency(totalCost)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Margin</span>
+                      <span className={`font-medium ${quotedPrice >= totalCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                        {totalCost > 0 ? `${(((quotedPrice - totalCost) / totalCost) * 100).toFixed(1)}%` : "—"}
+                      </span>
+                    </div>
+                  </>
                 )}
                 <div className="flex justify-between pt-2 border-t border-border/30">
                   <span className="text-muted-foreground">Quote ID</span>
