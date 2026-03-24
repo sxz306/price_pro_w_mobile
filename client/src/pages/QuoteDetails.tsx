@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, CheckCircle, Send, XCircle, FileText, TrendingUp, DollarSign, Target, Mail, RefreshCw, MessageSquare, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle, Send, XCircle, FileText, TrendingUp, DollarSign, Target, Mail, RefreshCw, MessageSquare, ArrowUpRight, ArrowDownLeft, Clock, Calendar } from "lucide-react";
 import { useCommunications, useSendQuote, useSyncReplies } from "@/hooks/use-communications";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
@@ -387,67 +387,86 @@ export default function QuoteDetails() {
                         </div>
 
                         {/* Win Rate */}
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="rounded-xl border border-border/50 p-4 bg-muted/20">
-                              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Est. Win Rate / Day</p>
-                              <div className={`text-2xl font-display font-bold tabular-nums mb-1 ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
-                                {winRate.toFixed(2)}%
-                              </div>
-                              <span className={`text-xs font-semibold ${winRateColor(winRate)}`}>{winRateLabel(winRate)}</span>
-                              <div className="w-full bg-muted rounded-full h-2 overflow-hidden mt-2">
-                                <div
-                                  className={`h-full rounded-full transition-all duration-300 ${winRateBarColor(winRate)}`}
-                                  style={{ width: `${Math.min(winRate * 10, 100)}%` }}
-                                  data-testid={`bar-win-rate-${item.id}`}
-                                />
-                              </div>
-                            </div>
+                        {(() => {
+                          const daysToSell = 1 / (winRate / 100);
+                          const win30 = (1 - Math.pow(1 - winRate / 100, 30)) * 100;
+                          return (
+                            <div className="space-y-3">
+                              <div className="rounded-xl border border-border/50 bg-muted/20 overflow-hidden">
+                                <div className="grid grid-cols-3 divide-x divide-border/50">
+                                  <div className="p-4 flex flex-col">
+                                    <div className="flex items-center gap-1.5 mb-3">
+                                      <Target className="w-3.5 h-3.5 text-muted-foreground" />
+                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Win Rate / Day</p>
+                                    </div>
+                                    <div className={`text-2xl font-display font-bold tabular-nums ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
+                                      {winRate.toFixed(2)}%
+                                    </div>
+                                    <div className="mt-auto pt-3">
+                                      <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full transition-all duration-300 ${winRateBarColor(winRate)}`}
+                                          style={{ width: `${Math.min(winRate * 10, 100)}%` }}
+                                          data-testid={`bar-win-rate-${item.id}`}
+                                        />
+                                      </div>
+                                      <p className={`text-[10px] font-medium mt-1.5 ${winRateColor(winRate)}`}>{winRateLabel(winRate)}</p>
+                                    </div>
+                                  </div>
 
-                            <div className="rounded-xl border border-border/50 p-4 bg-muted/20">
-                              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Expected Time to Sell</p>
-                              <div className="text-2xl font-display font-bold tabular-nums mb-1 text-foreground" data-testid={`text-time-to-sell-${item.id}`}>
-                                {(1 / (winRate / 100)).toFixed(1)}
-                              </div>
-                              <span className="text-xs text-muted-foreground">days</span>
-                            </div>
+                                  <div className="p-4 flex flex-col">
+                                    <div className="flex items-center gap-1.5 mb-3">
+                                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Time to Sell</p>
+                                    </div>
+                                    <div className="text-2xl font-display font-bold tabular-nums text-foreground" data-testid={`text-time-to-sell-${item.id}`}>
+                                      {daysToSell < 1000 ? daysToSell.toFixed(1) : "999+"}
+                                    </div>
+                                    <div className="mt-auto pt-3">
+                                      <p className="text-[10px] text-muted-foreground font-medium">
+                                        {daysToSell < 7 ? "Less than a week" : daysToSell < 30 ? `~${Math.round(daysToSell / 7)} weeks` : daysToSell < 365 ? `~${Math.round(daysToSell / 30)} months` : "Over a year"}
+                                      </p>
+                                      <p className="text-[10px] text-muted-foreground mt-0.5">expected days</p>
+                                    </div>
+                                  </div>
 
-                            <div className="rounded-xl border border-border/50 p-4 bg-muted/20">
-                              {(() => {
-                                const win30 = (1 - Math.pow(1 - winRate / 100, 30)) * 100;
-                                return (
-                                  <>
-                                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Est. Win Rate / 30 Days</p>
-                                    <div className={`text-2xl font-display font-bold tabular-nums mb-1 ${winRateColor(win30)}`} data-testid={`text-win-rate-30d-${item.id}`}>
+                                  <div className="p-4 flex flex-col">
+                                    <div className="flex items-center gap-1.5 mb-3">
+                                      <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Win Rate / 30 Days</p>
+                                    </div>
+                                    <div className={`text-2xl font-display font-bold tabular-nums ${winRateColor(win30)}`} data-testid={`text-win-rate-30d-${item.id}`}>
                                       {win30.toFixed(2)}%
                                     </div>
-                                    <span className={`text-xs font-semibold ${winRateColor(win30)}`}>{winRateLabel(win30)}</span>
-                                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden mt-2">
-                                      <div
-                                        className={`h-full rounded-full transition-all duration-300 ${winRateBarColor(win30)}`}
-                                        style={{ width: `${Math.min(win30, 100)}%` }}
-                                        data-testid={`bar-win-rate-30d-${item.id}`}
-                                      />
+                                    <div className="mt-auto pt-3">
+                                      <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full transition-all duration-300 ${winRateBarColor(win30)}`}
+                                          style={{ width: `${Math.min(win30, 100)}%` }}
+                                          data-testid={`bar-win-rate-30d-${item.id}`}
+                                        />
+                                      </div>
+                                      <p className={`text-[10px] font-medium mt-1.5 ${winRateColor(win30)}`}>{winRateLabel(win30)}</p>
                                     </div>
-                                  </>
-                                );
-                              })()}
-                            </div>
-                          </div>
+                                  </div>
+                                </div>
+                              </div>
 
-                          <div className="rounded-xl border border-border/50 p-3 bg-muted/10 flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                              <TrendingUp className="w-4 h-4 text-primary" />
+                              <div className="rounded-xl border border-border/50 p-3 bg-muted/10 flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                  <TrendingUp className="w-4 h-4 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Expected Revenue</p>
+                                  <p className="text-base font-semibold text-foreground" data-testid={`text-expected-revenue-${item.id}`}>
+                                    {formatCurrency(expectedRevenue)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">{winRate.toFixed(2)}% × {formatCurrency(adjLinePrice)}</p>
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Expected Revenue</p>
-                              <p className="text-base font-semibold text-foreground" data-testid={`text-expected-revenue-${item.id}`}>
-                                {formatCurrency(expectedRevenue)}
-                              </p>
-                              <p className="text-xs text-muted-foreground">{winRate.toFixed(2)}% × {formatCurrency(adjLinePrice)}</p>
-                            </div>
-                          </div>
-                        </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   );
