@@ -33,7 +33,7 @@ function baselineWinRate(customerId: number, productId: number): number {
 function calcWinRate(multiplier: number, customerId: number, productId: number): number {
   const baseline = baselineWinRate(customerId, productId);
   const rate = baseline * Math.exp(-2.5 * (multiplier - 1.0));
-  return Math.max(1, Math.min(98, Math.round(rate)));
+  return Math.max(0.01, Math.min(98, Math.round(rate * 100) / 100));
 }
 
 function winRateColor(rate: number): string {
@@ -393,7 +393,7 @@ export default function QuoteDetails() {
                               <span className={`text-xs font-semibold ${winRateColor(winRate)}`}>{winRateLabel(winRate)}</span>
                             </div>
                             <div className={`text-4xl font-display font-bold tabular-nums mb-2 ${winRateColor(winRate)}`} data-testid={`text-win-rate-${item.id}`}>
-                              {winRate}%
+                              {winRate.toFixed(2)}%
                             </div>
                             <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                               <div
@@ -413,7 +413,7 @@ export default function QuoteDetails() {
                               <p className="text-base font-semibold text-foreground" data-testid={`text-expected-revenue-${item.id}`}>
                                 {formatCurrency(expectedRevenue)}
                               </p>
-                              <p className="text-xs text-muted-foreground">{winRate}% × {formatCurrency(adjLinePrice)}</p>
+                              <p className="text-xs text-muted-foreground">{winRate.toFixed(2)}% × {formatCurrency(adjLinePrice)}</p>
                             </div>
                           </div>
                         </div>
