@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { api } from "@shared/routes";
@@ -7,7 +8,7 @@ export function useCommunications(quoteId: number) {
   return useQuery<Communication[]>({
     queryKey: ['/api/quotes', quoteId, 'communications'],
     queryFn: async () => {
-      const res = await fetch(`/api/quotes/${quoteId}/communications`);
+      const res = await apiFetch(`/api/quotes/${quoteId}/communications`);
       if (!res.ok) throw new Error('Failed to fetch communications');
       return res.json();
     },

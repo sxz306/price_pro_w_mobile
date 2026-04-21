@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect, useState } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,10 +11,29 @@ import Products from "@/pages/Products";
 import Quotes from "@/pages/Quotes";
 import QuoteDetails from "@/pages/QuoteDetails";
 import Customers from "@/pages/Customers";
+import Login from "@/pages/Login";
+import { getToken } from "@/lib/auth";
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const [location, setLocation] = useLocation();
+  const hasToken = Boolean(getToken());
+
+  useEffect(() => {
+    if (!hasToken && location !== "/login") {
+      setLocation("/login");
+    } else if (hasToken && location === "/login") {
+      setLocation("/");
+    }
+  }, [hasToken, location, setLocation]);
+
+  if (!hasToken && location !== "/login") return null;
+  return <>{children}</>;
+}
 
 function Router() {
   return (
     <Switch>
+      <Route path="/login" component={Login}/>
       <Route path="/" component={Dashboard}/>
       <Route path="/products" component={Products}/>
       <Route path="/quotes" component={Quotes}/>
@@ -30,7 +50,9 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <AuthGate>
+            <Router />
+          </AuthGate>
         </WouterRouter>
       </TooltipProvider>
     </QueryClientProvider>

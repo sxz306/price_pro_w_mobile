@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { Quote, InsertQuote, UpdateQuoteRequest } from "@shared/schema";
@@ -7,7 +8,7 @@ export function useQuotes() {
   return useQuery({
     queryKey: [api.quotes.list.path],
     queryFn: async () => {
-      const res = await fetch(api.quotes.list.path, { credentials: "include" });
+      const res = await apiFetch(api.quotes.list.path, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch quotes");
       const data = await res.json();
       return api.quotes.list.responses[200].parse(data);
@@ -20,7 +21,7 @@ export function useQuote(id: number) {
     queryKey: [api.quotes.get.path, id],
     queryFn: async () => {
       const url = buildUrl(api.quotes.get.path, { id });
-      const res = await fetch(url, { credentials: "include" });
+      const res = await apiFetch(url, { credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch quote");
       const data = await res.json();
@@ -37,7 +38,7 @@ export function useCreateQuote() {
   return useMutation({
     mutationFn: async (data: InsertQuote) => {
       const validated = api.quotes.create.input.parse(data);
-      const res = await fetch(api.quotes.create.path, {
+      const res = await apiFetch(api.quotes.create.path, {
         method: api.quotes.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated),
@@ -64,7 +65,7 @@ export function useUpdateQuote() {
     mutationFn: async ({ id, ...updates }: { id: number } & UpdateQuoteRequest) => {
       const validated = api.quotes.update.input.parse(updates);
       const url = buildUrl(api.quotes.update.path, { id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.quotes.update.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated),
@@ -91,7 +92,7 @@ export function useDeleteQuote() {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.quotes.delete.path, { id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.quotes.delete.method,
         credentials: "include",
       });

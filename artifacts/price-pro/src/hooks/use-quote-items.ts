@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { QuoteItem, InsertQuoteItem } from "@shared/schema";
@@ -8,7 +9,7 @@ export function useQuoteItems(quoteId: number) {
     queryKey: [api.quoteItems.list.path, quoteId],
     queryFn: async () => {
       const url = buildUrl(api.quoteItems.list.path, { quoteId });
-      const res = await fetch(url, { credentials: "include" });
+      const res = await apiFetch(url, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch quote items");
       const data = await res.json();
       return api.quoteItems.list.responses[200].parse(data);
@@ -25,7 +26,7 @@ export function useCreateQuoteItem(quoteId: number) {
     mutationFn: async (data: Omit<InsertQuoteItem, 'quoteId'>) => {
       const validated = api.quoteItems.create.input.parse(data);
       const url = buildUrl(api.quoteItems.create.path, { quoteId });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.quoteItems.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated),
@@ -51,7 +52,7 @@ export function useUpdateQuoteItem(quoteId: number) {
   return useMutation({
     mutationFn: async ({ id, priceMultiplier }: { id: number; priceMultiplier: string }) => {
       const url = buildUrl(api.quoteItems.update.path, { quoteId, id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.quoteItems.update.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priceMultiplier }),
@@ -73,7 +74,7 @@ export function useDeleteQuoteItem(quoteId: number) {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.quoteItems.delete.path, { quoteId, id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.quoteItems.delete.method,
         credentials: "include",
       });

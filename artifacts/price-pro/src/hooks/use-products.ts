@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { Product, InsertProduct, UpdateProductRequest } from "@shared/schema";
@@ -7,7 +8,7 @@ export function useProducts() {
   return useQuery({
     queryKey: [api.products.list.path],
     queryFn: async () => {
-      const res = await fetch(api.products.list.path, { credentials: "include" });
+      const res = await apiFetch(api.products.list.path, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch products");
       const data = await res.json();
       return api.products.list.responses[200].parse(data);
@@ -20,7 +21,7 @@ export function useProduct(id: number) {
     queryKey: [api.products.get.path, id],
     queryFn: async () => {
       const url = buildUrl(api.products.get.path, { id });
-      const res = await fetch(url, { credentials: "include" });
+      const res = await apiFetch(url, { credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch product");
       const data = await res.json();
@@ -37,7 +38,7 @@ export function useCreateProduct() {
   return useMutation({
     mutationFn: async (data: InsertProduct) => {
       const validated = api.products.create.input.parse(data);
-      const res = await fetch(api.products.create.path, {
+      const res = await apiFetch(api.products.create.path, {
         method: api.products.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated),
@@ -67,7 +68,7 @@ export function useUpdateProduct() {
     mutationFn: async ({ id, ...updates }: { id: number } & UpdateProductRequest) => {
       const validated = api.products.update.input.parse(updates);
       const url = buildUrl(api.products.update.path, { id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.products.update.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated),
@@ -94,7 +95,7 @@ export function useDeleteProduct() {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.products.delete.path, { id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.products.delete.method,
         credentials: "include",
       });

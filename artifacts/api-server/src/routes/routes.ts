@@ -1,41 +1,37 @@
 import { Router, type IRouter } from "express";
-import { createHmac } from "crypto";
 import { storage } from "../storage";
 import { api } from "@workspace/api-zod";
 import { z } from "zod";
 import { sendQuoteEmail, getThreadReplies } from "../gmail";
+import { signToken, requireAuth, getDemoCredentials } from "../auth";
 
 const router: IRouter = Router();
 
-// === MOBILE AUTH ===
-// Token-based login for the mobile companion app. Leaves the existing web
-// cookie/session flow untouched. Returns a stateless HMAC-signed bearer
-// token (email|signature) that the mobile client persists in
-// expo-secure-store and sends as `Authorization: Bearer <token>`.
-const MOBILE_LOGIN_EMAIL = "rep@pricepro.com";
-const MOBILE_LOGIN_PASSWORD = "pricepro";
-
-function signMobileToken(email: string): string {
-  const secret = process.env.SESSION_SECRET ?? "dev-secret-change-me";
-  const sig = createHmac("sha256", secret).update(email).digest("hex");
-  return `${Buffer.from(email).toString("base64url")}.${sig}`;
-}
-
-const mobileLoginSchema = z.object({
+// === AUTH ===
+// Token-based login used by both the mobile companion app and the web app.
+// Credentials are sourced from MOBILE_LOGIN_EMAIL / MOBILE_LOGIN_PASSWORD
+// env vars; in development a demo credential pair is used as a fallback.
+// In production, the server will refuse logins when the env vars are not set.
+// Tokens are stateless HMAC-signed bearers verified by the requireAuth
+// middleware below. Failures fast when SESSION_SECRET is missing in prod.
+const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 });
 
-router.post("/api/auth/mobile-login", async (req, res) => {
+async function handleLogin(req: any, res: any) {
   try {
-    const { email, password } = mobileLoginSchema.parse(req.body);
-    if (
-      email.toLowerCase() !== MOBILE_LOGIN_EMAIL ||
-      password !== MOBILE_LOGIN_PASSWORD
-    ) {
+    const { email, password } = loginSchema.parse(req.body);
+    const creds = getDemoCredentials();
+    if (!creds) {
+      return res
+        .status(503)
+        .json({ message: "Authentication is not configured on this server" });
+    }
+    if (email.toLowerCase() !== creds.email || password !== creds.password) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-    const token = signMobileToken(email.toLowerCase());
+    const token = signToken(email.toLowerCase());
     res.json({ token, email: email.toLowerCase() });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -45,6 +41,24 @@ router.post("/api/auth/mobile-login", async (req, res) => {
     }
     throw err;
   }
+}
+
+router.post("/api/auth/login", handleLogin);
+// Backwards-compat for an earlier path name used by the mobile client.
+router.post("/api/auth/mobile-login", handleLogin);
+
+// All API routes below require a valid bearer token. Auth + health are
+// excluded; everything else (customers, products, quotes, quote-items
+// nested under quotes, and communications) goes through requireAuth.
+router.use((req, res, next) => {
+  if (
+    req.path.startsWith("/api/auth/") ||
+    req.path === "/api/healthz" ||
+    !req.path.startsWith("/api/")
+  ) {
+    return next();
+  }
+  return requireAuth(req as any, res, next);
 });
 
 // === CUSTOMERS ===

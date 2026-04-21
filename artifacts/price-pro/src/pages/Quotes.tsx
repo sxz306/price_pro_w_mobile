@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { useQuotes, useCreateQuote, useDeleteQuote } from "@/hooks/use-quotes";
@@ -33,7 +34,7 @@ export default function Quotes() {
   const { data: allItems } = useQuery<QuoteItem[]>({
     queryKey: [api.quoteItems.listAll.path],
     queryFn: async () => {
-      const res = await fetch(api.quoteItems.listAll.path, { credentials: "include" });
+      const res = await apiFetch(api.quoteItems.listAll.path, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch items");
       return res.json();
     },
@@ -94,7 +95,7 @@ export default function Quotes() {
     setIsSubmitting(true);
     try {
       // 1. Create the quote
-      const quoteRes = await fetch(api.quotes.create.path, {
+      const quoteRes = await apiFetch(api.quotes.create.path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -111,7 +112,7 @@ export default function Quotes() {
 
       // 2. Add the first line item
       const itemUrl = buildUrl(api.quoteItems.create.path, { quoteId: quote.id });
-      const itemRes = await fetch(itemUrl, {
+      const itemRes = await apiFetch(itemUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

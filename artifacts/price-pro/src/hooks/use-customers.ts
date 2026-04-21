@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { Customer, InsertCustomer, UpdateCustomerRequest } from "@shared/schema";
@@ -7,7 +8,7 @@ export function useCustomers() {
   return useQuery({
     queryKey: [api.customers.list.path],
     queryFn: async () => {
-      const res = await fetch(api.customers.list.path, { credentials: "include" });
+      const res = await apiFetch(api.customers.list.path, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch customers");
       const data = await res.json();
       return data as Customer[];
@@ -21,7 +22,7 @@ export function useCreateCustomer() {
 
   return useMutation({
     mutationFn: async (data: InsertCustomer) => {
-      const res = await fetch(api.customers.create.path, {
+      const res = await apiFetch(api.customers.create.path, {
         method: api.customers.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -50,7 +51,7 @@ export function useUpdateCustomer() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: number } & UpdateCustomerRequest) => {
       const url = buildUrl(api.customers.update.path, { id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.customers.update.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
@@ -76,7 +77,7 @@ export function useDeleteCustomer() {
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.customers.delete.path, { id });
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method: api.customers.delete.method,
         credentials: "include",
       });
