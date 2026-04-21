@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/pricepro-mobile/"
+title = "Price Pro Mobile"
+version = "1.0.0"
+id = "artifacts/pricepro-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/pricepro-mobile/" ]
+localPort = 25600
+
+[services.development]
+run = "pnpm --filter @workspace/pricepro-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pricepro-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/pricepro-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "25600"
+BASE_PATH = "/pricepro-mobile/"

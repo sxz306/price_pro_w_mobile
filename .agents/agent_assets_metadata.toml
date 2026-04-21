@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "IV4iaImZbSTNNDgMrOhAE"
+uri = "file://artifacts/pricepro-mobile/assets/images/icon.png"
+type = "image"
+title = "price pro icon"
