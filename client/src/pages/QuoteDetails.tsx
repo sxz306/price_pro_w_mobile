@@ -225,16 +225,16 @@ export default function QuoteDetails() {
 
               {/* Cost Summary Strip */}
               {totalCost != null && (
-                <div className="grid grid-cols-3 gap-4 mb-6 p-4 rounded-xl bg-muted/30 border border-border/40">
-                  <div className="text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 p-4 rounded-xl bg-muted/30 border border-border/40 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
+                  <div className="text-center pb-3 sm:pb-0">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Cost</p>
                     <p className="text-lg font-semibold text-foreground" data-testid="text-total-cost">{formatCurrency(totalCost)}</p>
                   </div>
-                  <div className="text-center border-x border-border/40">
+                  <div className="text-center pt-3 sm:pt-0">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Gross Profit</p>
                     <p className={`text-lg font-semibold ${quotedPrice >= totalCost ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`} data-testid="text-gross-profit">{formatCurrency(quotedPrice - totalCost)}</p>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center pt-3 sm:pt-0">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Margin</p>
                     <p
                       className={`text-lg font-semibold ${grossMargin != null && grossMargin >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
@@ -480,8 +480,8 @@ export default function QuoteDetails() {
                               <div>
                                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Win Probability</p>
                                 <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
-                                  <div className="grid grid-cols-3">
-                                    <div className="p-3 flex flex-col min-h-[110px]">
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border/30">
+                                    <div className="p-3 flex flex-col sm:min-h-[110px]">
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
                                           <Target className="w-3 h-3 text-primary" />
@@ -493,7 +493,7 @@ export default function QuoteDetails() {
                                       </div>
                                     </div>
 
-                                    <div className="p-3 flex flex-col min-h-[110px] border-x border-border/30">
+                                    <div className="p-3 flex flex-col sm:min-h-[110px]">
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
                                           <Clock className="w-3 h-3 text-primary" />
@@ -513,7 +513,7 @@ export default function QuoteDetails() {
                                       </div>
                                     </div>
 
-                                    <div className="p-3 flex flex-col min-h-[110px]">
+                                    <div className="p-3 flex flex-col sm:min-h-[110px]">
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
                                           <Calendar className="w-3 h-3 text-primary" />
@@ -541,8 +541,8 @@ export default function QuoteDetails() {
                               <div>
                                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Margin Analysis</p>
                                 <div className="rounded-xl border border-border/40 bg-card overflow-hidden shadow-sm">
-                                  <div className="grid grid-cols-3">
-                                    <div className={`p-3 flex flex-col min-h-[110px] ${marginBg(marginPct)}`}>
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border/30">
+                                    <div className={`p-3 flex flex-col sm:min-h-[110px] ${marginBg(marginPct)}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className={`w-5 h-5 rounded-md flex items-center justify-center ${marginPct != null && marginPct > 0 ? "bg-emerald-500/10" : marginPct != null && marginPct < 0 ? "bg-red-500/10" : "bg-muted"}`}>
                                           <DollarSign className={`w-3 h-3 ${marginPct != null && marginPct > 0 ? "text-emerald-500" : marginPct != null && marginPct < 0 ? "text-red-500" : "text-muted-foreground"}`} />
@@ -559,7 +559,7 @@ export default function QuoteDetails() {
                                       </div>
                                     </div>
 
-                                    <div className={`p-3 flex flex-col min-h-[110px] border-x border-border/30 ${marginBg(marginPerDay)}`} data-testid={`margin-per-day-cell-${item.id}`}>
+                                    <div className={`p-3 flex flex-col sm:min-h-[110px] ${marginBg(marginPerDay)}`} data-testid={`margin-per-day-cell-${item.id}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className={`w-5 h-5 rounded-md flex items-center justify-center ${marginPerDay != null && marginPerDay > 0 ? "bg-emerald-500/10" : marginPerDay != null && marginPerDay < 0 ? "bg-red-500/10" : "bg-muted"}`}>
                                           <TrendingUp className={`w-3 h-3 ${marginPerDay != null && marginPerDay > 0 ? "text-emerald-500" : marginPerDay != null && marginPerDay < 0 ? "text-red-500" : "text-muted-foreground"}`} />
@@ -576,7 +576,7 @@ export default function QuoteDetails() {
                                       </div>
                                     </div>
 
-                                    <div className={`p-3 flex flex-col min-h-[110px] ${marginBg(margin45)}`}>
+                                    <div className={`p-3 flex flex-col sm:min-h-[110px] ${marginBg(margin45)}`}>
                                       <div className="flex items-center gap-1.5 mb-1">
                                         <div className={`w-5 h-5 rounded-md flex items-center justify-center ${margin45 != null && margin45 > 0 ? "bg-emerald-500/10" : margin45 != null && margin45 < 0 ? "bg-red-500/10" : "bg-muted"}`}>
                                           <Calendar className={`w-3 h-3 ${margin45 != null && margin45 > 0 ? "text-emerald-500" : margin45 != null && margin45 < 0 ? "text-red-500" : "text-muted-foreground"}`} />
