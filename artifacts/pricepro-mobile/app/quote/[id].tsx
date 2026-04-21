@@ -395,7 +395,7 @@ function ItemRow({
       <Slider
         testID={`slider-price-${item.id}`}
         style={{ width: "100%", height: 36 }}
-        minimumValue={1.0}
+        minimumValue={0.7}
         maximumValue={2.0}
         step={0.01}
         value={mult}
@@ -413,7 +413,7 @@ function ItemRow({
       />
       <View style={styles.sliderEnds}>
         <Text style={[styles.sliderEndText, { color: colors.mutedForeground }]}>
-          0%
+          −30%
         </Text>
         <Text style={[styles.sliderEndText, { color: colors.mutedForeground }]}>
           +100%

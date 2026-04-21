@@ -1,14 +1,17 @@
 import type { Customer, Product, Quote, QuoteItem, Communication } from "./types";
+import { loadAuth } from "./auth";
 
 const DOMAIN = process.env.EXPO_PUBLIC_DOMAIN;
 const BASE = DOMAIN ? `https://${DOMAIN}/api` : "/api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const auth = await loadAuth();
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
+      ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
       ...(init?.headers ?? {}),
     },
   });
@@ -25,6 +28,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  auth: {
+    login: (body: { email: string; password: string }) =>
+      request<{ token: string; email: string }>("/auth/mobile-login", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+  },
   customers: {
     list: () => request<Customer[]>("/customers"),
     get: (id: number) => request<Customer>(`/customers/${id}`),

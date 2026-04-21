@@ -1,10 +1,51 @@
 import { Router, type IRouter } from "express";
+import { createHmac } from "crypto";
 import { storage } from "../storage";
 import { api } from "@workspace/api-zod";
 import { z } from "zod";
 import { sendQuoteEmail, getThreadReplies } from "../gmail";
 
 const router: IRouter = Router();
+
+// === MOBILE AUTH ===
+// Token-based login for the mobile companion app. Leaves the existing web
+// cookie/session flow untouched. Returns a stateless HMAC-signed bearer
+// token (email|signature) that the mobile client persists in
+// expo-secure-store and sends as `Authorization: Bearer <token>`.
+const MOBILE_LOGIN_EMAIL = "rep@pricepro.com";
+const MOBILE_LOGIN_PASSWORD = "pricepro";
+
+function signMobileToken(email: string): string {
+  const secret = process.env.SESSION_SECRET ?? "dev-secret-change-me";
+  const sig = createHmac("sha256", secret).update(email).digest("hex");
+  return `${Buffer.from(email).toString("base64url")}.${sig}`;
+}
+
+const mobileLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+router.post("/api/auth/mobile-login", async (req, res) => {
+  try {
+    const { email, password } = mobileLoginSchema.parse(req.body);
+    if (
+      email.toLowerCase() !== MOBILE_LOGIN_EMAIL ||
+      password !== MOBILE_LOGIN_PASSWORD
+    ) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const token = signMobileToken(email.toLowerCase());
+    res.json({ token, email: email.toLowerCase() });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res
+        .status(400)
+        .json({ message: err.issues[0].message, field: err.issues[0].path.join(".") });
+    }
+    throw err;
+  }
+});
 
 // === CUSTOMERS ===
 router.get(api.customers.list.path, async (_req, res) => {
